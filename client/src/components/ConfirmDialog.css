@@ -1,0 +1,57 @@
+
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(6px);
+  animation: confirm-fade var(--duration-base) var(--ease-standard);
+}
+
+.confirm-panel {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--space-8) var(--space-6) var(--space-6);
+  text-align: center;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.3);
+  animation: confirm-pop var(--duration-base) var(--ease-standard);
+}
+
+.confirm-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto var(--space-4);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--signal);
+  background: color-mix(in srgb, var(--signal) 12%, transparent);
+}
+.confirm-icon-danger { color: var(--alert); background: color-mix(in srgb, var(--alert) 12%, transparent); }
+
+.confirm-title { font-family: var(--font-stat); font-size: var(--text-lg); margin-bottom: var(--space-2); }
+.confirm-message { color: var(--ink-muted); font-size: var(--text-sm); line-height: 1.6; margin-bottom: var(--space-6); }
+
+.confirm-actions { display: flex; gap: var(--space-3); }
+.confirm-actions .btn { flex: 1; }
+
+.confirm-btn-danger { background: var(--alert); color: #fff; }
+.confirm-btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--alert) 85%, black); }
+.confirm-actions .btn:disabled { opacity: 0.6; cursor: default; }
+
+.confirm-spin { animation: confirm-rotate 1s linear infinite; }
+
+@keyframes confirm-fade { from { opacity: 0; } }
+@keyframes confirm-pop { from { opacity: 0; transform: scale(0.94) translateY(8px); } }
+@keyframes confirm-rotate { to { transform: rotate(360deg); } }

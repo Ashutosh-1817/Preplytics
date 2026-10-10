@@ -1,0 +1,97 @@
+/* src/layouts/AppShell.css */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-base);
+}
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-right: 1px solid var(--border);
+  padding: var(--space-6) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sidebar-brand {
+  font-family: var(--font-stat);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  padding: 0 var(--space-2);
+  background: linear-gradient(135deg, var(--signal), var(--highlight));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-pill);
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: background var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard),
+              transform var(--duration-fast) var(--ease-standard);
+}
+
+.sidebar-link:hover {
+  background: var(--surface-raised);
+  color: var(--ink);
+  transform: translateX(2px);
+}
+
+.sidebar-link-active {
+  background: var(--signal);
+  color: #fff;
+  box-shadow: 0 4px 14px -2px color-mix(in srgb, var(--signal) 50%, transparent);
+}
+
+.sidebar-link-active:hover {
+  background: var(--signal-hover);
+  color: #fff;
+  transform: none;
+}
+
+.sidebar-icon {
+  font-size: var(--text-base);
+  width: 1.5rem;
+  text-align: center;
+}
+
+.app-content {
+  flex: 1;
+  padding: var(--space-8);
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 72px;
+  }
+  .sidebar-brand,
+  .sidebar-link span:last-child {
+    display: none;
+  }
+  .sidebar-link {
+    justify-content: center;
+  }
+}

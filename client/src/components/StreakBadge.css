@@ -1,0 +1,12 @@
+.streak-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 180px;
+}
+
+.streak-number {
+  font-size: var(--text-3xl);
+  display: inline-block;
+}

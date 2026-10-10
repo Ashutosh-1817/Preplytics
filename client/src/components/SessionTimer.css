@@ -1,0 +1,88 @@
+.session-timer {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.session-timer-idle {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.session-timer-active {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: color-mix(in srgb, var(--signal) 8%, transparent);
+  border: 1px solid var(--signal);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.session-timer-clock {
+  font-size: var(--text-xl);
+  color: var(--signal);
+  flex: 1;
+}
+
+.session-stop-btn {
+  background: var(--alert);
+}
+
+.session-stop-btn:hover {
+  background: color-mix(in srgb, var(--alert) 85%, black);
+}
+
+.session-manual-form {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.session-manual-form .auth-input {
+  width: 80px;
+}
+
+
+
+.session-info {
+  margin-bottom: var(--space-2);
+}
+
+.session-recent-list {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.session-recent-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-1) 0;
+}
+
+.session-undo-btn {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  opacity: 0.7;
+}
+
+.session-undo-btn:hover {
+  color: var(--alert);
+  opacity: 1;
+}
+
+.session-reset-all {
+  margin-top: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  text-decoration: underline;
+}
+
+.session-reset-all:hover {
+  color: var(--alert);
+}
