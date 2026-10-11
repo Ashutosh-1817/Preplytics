@@ -20,7 +20,7 @@ import dashboardRoutes from './routes/dashboard.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import aiSyllabusRoutes from './routes/aiSyllabus.routes.js';
 import sessionRoutes from './routes/session.routes.js';
-
+import searchRoutes from './routes/search.routes.js';
 
 const app = express();
 
@@ -66,6 +66,7 @@ app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/ai', aiRoutes);
 app.use('/api/v1/goals/:goalId', aiSyllabusRoutes);
 app.use('/api/v1/sessions', sessionRoutes);
+app.use('/api/v1/search', searchRoutes);
 
 
 // Anything that reaches this point matched no real route

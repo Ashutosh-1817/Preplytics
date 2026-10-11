@@ -74,6 +74,12 @@ const config = Object.freeze({
     geminiModel: process.env.GEMINI_MODEL,
     dailyLimit: Number(process.env.AI_DAILY_LIMIT),
   }),
+  reminderTimezone: process.env.REMINDER_TIMEZONE || 'Asia/Kolkata',
+  search: Object.freeze({
+    tavilyApiKey: process.env.TAVILY_API_KEY || '', // optional: search stays off until set
+    monthlyCreditCap: Number(process.env.SEARCH_MONTHLY_CREDIT_CAP) || 900,
+    dailyLimitPerUser: Number(process.env.SEARCH_DAILY_LIMIT) || 15,
+  }),
 });
 
 export default config ;

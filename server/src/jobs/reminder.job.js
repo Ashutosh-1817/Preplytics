@@ -1,118 +1,137 @@
+
+
 import cron from 'node-cron';
+import config from '../config/env.js';
 import User from '../models/User.model.js';
 import Goal from '../models/Goal.model.js';
 import RoadmapNode from '../models/RoadmapNode.model.js';
 import Session from '../models/Session.model.js';
 import { createNotification } from '../services/notification.service.js';
-import { getAdjustedDailyMinutes } from '../services/efficiency.service.js';
+import { getCapacityInfo } from '../services/scheduler.service.js';
 import dateOnly from '../utils/dateOnly.js';
 
 const REVISION_THRESHOLD_DAYS = 7;
-const DEFAULT_ESTIMATED_MINUTES = 30;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+const formatMinutes = (minutes) => {
+  const total = Math.round(minutes);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h === 0) return `${m}m`;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+};
 
 // ---------- 1. Daily inactivity nudge ----------
-// Fires once per user, only if they logged zero sessions today.
 
 const checkInactivity = async (user) => {
-  const startOfToday = dateOnly(new Date());
+  // Nothing to nudge about if there's no active goal
+  const hasActiveGoal = await Goal.exists({ owner: user._id, status: 'active' });
+  if (!hasActiveGoal) return;
 
-  const sessionToday = await Session.findOne({
+  const studiedToday = await Session.exists({
     owner: user._id,
-    startedAt: { $gte: startOfToday },
+    startedAt: { $gte: dateOnly(new Date()) },
   });
-
-  if (sessionToday) return;
+  if (studiedToday) return;
 
   await createNotification({
     user,
     type: 'inactivity',
-    message: "You haven't logged any study time today — even a short session keeps your momentum going.",
+    message: "You haven't logged any study time today. Even a short session keeps your streak alive.",
   });
 };
 
-// ---------- 2. Falling-behind-pace alert ----------
-// Per active goal with a targetDate: can the remaining actionable,
-// incomplete work realistically fit in the remaining days at the
-// goal's current (efficiency-adjusted) daily capacity?
+// ---------- 2. Falling behind pace / past deadline ----------
+// Uses the same capacity maths as the scheduler, so both always agree.
 
 const checkBehindPace = async (user) => {
-  const activeGoals = await Goal.find({
-    owner: user._id,
-    status: 'active',
-    targetDate: { $ne: null },
-  });
+  const goals = await Goal.find({ owner: user._id, status: 'active', targetDate: { $ne: null } });
+  const today = dateOnly(new Date());
 
-  for (const goal of activeGoals) {
-    const today = dateOnly(new Date());
-    const target = dateOnly(goal.targetDate);
-    const remainingDays = Math.max(1, Math.ceil((target - today) / (1000 * 60 * 60 * 24)));
+  for (const goal of goals) {
+    const info = await getCapacityInfo(goal);
+    if (!info.hasDeadline || info.existingRemainingMinutes <= 0) continue;
 
-    const incompleteNodes = await RoadmapNode.find({
-      goalId: goal._id,
-      isActionable: true,
-      status: { $ne: 'completed' },
-    }).select('estimatedMinutes');
+    if (dateOnly(goal.targetDate) < today) {
+      const open = await RoadmapNode.countDocuments({
+        goalId: goal._id,
+        isActionable: true,
+        status: { $ne: 'completed' },
+      });
 
-    if (incompleteNodes.length === 0) continue;
-
-    const totalRemainingMinutes = incompleteNodes.reduce(
-      (sum, n) => sum + (n.estimatedMinutes || DEFAULT_ESTIMATED_MINUTES),
-      0
-    );
-    const totalAvailableMinutes = remainingDays * getAdjustedDailyMinutes(goal);
-
-    if (totalRemainingMinutes > totalAvailableMinutes) {
       await createNotification({
         user,
         type: 'behind_pace',
         goalId: goal._id,
-        message: `"${goal.title}": ${incompleteNodes.length} topics remain with ${remainingDays} day(s) left — at your current pace this is behind schedule. Consider regenerating your plan.`,
+        message: `"${goal.title}" is past its deadline with ${plural(open, 'topic')} still open. Extend the deadline or archive the goal.`,
+      });
+      continue;
+    }
+
+    const available = info.days * info.dailyCapacityMinutes;
+
+    if (info.existingRemainingMinutes > available) {
+      await createNotification({
+        user,
+        type: 'behind_pace',
+        goalId: goal._id,
+        message: `"${goal.title}" needs about ${formatMinutes(info.existingRemainingMinutes)} more study, but only ${formatMinutes(available)} fits before the deadline at your current pace. Adjust your daily time or deadline.`,
       });
     }
   }
 };
 
-// ---------- 3. Revision reminders ----------
-// Per active goal: find actionable, completed nodes whose last session
-// was more than REVISION_THRESHOLD_DAYS ago, bundle them into one digest.
+// ---------- 3. Revision digest: one bundled notification per goal ----------
 
 const checkRevisionDue = async (user) => {
-  const activeGoals = await Goal.find({ owner: user._id, status: 'active' });
-  const thresholdDate = new Date(Date.now() - REVISION_THRESHOLD_DAYS * 24 * 60 * 60 * 1000);
+  const goals = await Goal.find({ owner: user._id, status: 'active' }).select('_id title');
+  const threshold = Date.now() - REVISION_THRESHOLD_DAYS * MS_PER_DAY;
 
-  for (const goal of activeGoals) {
-    const candidateNodes = await RoadmapNode.find({
+  for (const goal of goals) {
+    const completed = await RoadmapNode.find({
       goalId: goal._id,
       isActionable: true,
       status: 'completed',
-    }).select('_id title createdAt');
+    }).select('_id updatedAt');
 
-    if (candidateNodes.length === 0) continue;
+    if (completed.length === 0) continue;
 
-    const overdueNodeIds = [];
+    // One query for every topic's most recent session, instead of one per topic
+    const lastSessions = await Session.aggregate([
+      { $match: { nodeId: { $in: completed.map((n) => n._id) }, durationMinutes: { $ne: null } } },
+      { $group: { _id: '$nodeId', last: { $max: '$startedAt' } } },
+    ]);
+    const lastByNode = new Map(lastSessions.map((s) => [s._id.toString(), s.last.getTime()]));
 
-    for (const node of candidateNodes) {
-      const lastSession = await Session.findOne({ nodeId: node._id }).sort({ startedAt: -1 });
+    // "Last touched" = the later of its newest session and its last update
+    // (completing a topic updates it), so a topic completed today isn't flagged.
+    const overdueIds = completed
+      .filter((node) => {
+        const touched = Math.max(lastByNode.get(node._id.toString()) ?? 0, node.updatedAt.getTime());
+        return touched < threshold;
+      })
+      .map((node) => node._id);
 
-      const lastTouched = lastSession ? lastSession.startedAt : node.createdAt;
-      if (lastTouched < thresholdDate) {
-        overdueNodeIds.push(node._id);
-      }
-    }
-
-    if (overdueNodeIds.length === 0) continue;
+    if (overdueIds.length === 0) continue;
 
     await createNotification({
       user,
       type: 'revision',
       goalId: goal._id,
-      nodeIds: overdueNodeIds,
-      message: `"${goal.title}": ${overdueNodeIds.length} topic(s) haven't been revisited in over ${REVISION_THRESHOLD_DAYS} days — a quick review keeps them fresh.`,
+      nodeIds: overdueIds,
+      message: `"${goal.title}": ${plural(overdueIds.length, 'topic')} not revisited in over ${REVISION_THRESHOLD_DAYS} days. A quick review keeps them fresh.`,
     });
   }
 };
 
-// ---------- The daily job ----------
+// One user's full check. Used by the daily sweep and the dev test button.
+export const runRemindersForUser = async (user) => {
+  await checkInactivity(user);
+  await checkBehindPace(user);
+  await checkRevisionDue(user);
+};
 
 const runDailyReminders = async () => {
   console.log('[REMINDER JOB] Starting daily reminder sweep...');
@@ -121,11 +140,9 @@ const runDailyReminders = async () => {
 
   for (const user of users) {
     try {
-      await checkInactivity(user);
-      await checkBehindPace(user);
-      await checkRevisionDue(user);
+      await runRemindersForUser(user);
     } catch (err) {
-      // One user's failure should never abort the sweep for everyone else
+      // One user's failure must never stop everyone else's reminders
       console.error(`[REMINDER JOB] Failed for user ${user._id}:`, err.message);
     }
   }
@@ -133,12 +150,7 @@ const runDailyReminders = async () => {
   console.log('[REMINDER JOB] Sweep complete.');
 };
 
-// Runs once daily at 20:00 server time — server-time-only, per the v1 decision
 export const startReminderJob = () => {
-  cron.schedule('0 20 * * *', runDailyReminders);
-  console.log('[REMINDER JOB] Scheduled for 20:00 server time daily.');
+  cron.schedule('0 20 * * *', runDailyReminders, { timezone: config.reminderTimezone });
+  console.log(`[REMINDER JOB] Scheduled for 20:00 (${config.reminderTimezone}) daily.`);
 };
-
-// Exported separately so it can be triggered manually for testing,
-// without waiting for 8 PM
-export const runRemindersNow = runDailyReminders;

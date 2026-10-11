@@ -8,6 +8,7 @@ import File from '../models/File.model.js';
 import cloudinary from '../config/cloudinary.js';
 import { resolveCloudinaryResourceType } from '../utils/fileType.js';
 import Note from '../models/Note.model.js';
+import Notification from '../models/Notification.model.js';
 
 // Shared ownership guard — every goal/node operation needs this, so it's
 // centralized here rather than repeated per controller. Returns the goal
@@ -89,6 +90,7 @@ export const deleteGoal = asyncHandler(async (req, res) => {
 
   const deletedFiles = await File.deleteMany({ goalId: goal._id });
 
+  await Notification.deleteMany({ goalId: goal._id });
   await goal.deleteOne();
 
   res.status(200).json(

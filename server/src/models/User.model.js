@@ -76,6 +76,10 @@ const userSchema = new mongoose.Schema(
       date: { type: String, default: null },   // "YYYY-MM-DD"
       count: { type: Number, default: 0 },
     },
+    searchUsage: {
+      date: { type: String, default: null },
+      count: { type: Number, default: 0 },
+    },
   },
   { timestamps: true }
 );

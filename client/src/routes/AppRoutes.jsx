@@ -11,6 +11,7 @@ import Files from '../pages/Files.jsx';
 import CalendarPage from '../pages/Calendar.jsx';
 import Login from '../pages/Login.jsx';
 import Signup from '../pages/Signup.jsx';
+import Research from '../pages/Research.jsx';
 
 function AppRoutes() {
   return (
@@ -31,6 +32,7 @@ function AppRoutes() {
         <Route path="/notes" element={<Notes />} />
         <Route path="/files" element={<Files />} />
         <Route path="/calendar" element={<CalendarPage />} />
+        <Route path="/research" element={<Research />} />
       </Route>
     </Routes>
   );
