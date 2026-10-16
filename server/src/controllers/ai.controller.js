@@ -11,15 +11,34 @@ import { enforceAiRateLimit } from '../services/rateLimit.service.js';
 
 const CHAT_HISTORY_WINDOW = 6; // last N messages sent back to the LLM for continuity
 
+// A whole PDF is a much larger prompt than a note, so give the model longer to answer
+const LONG_CONTEXT_TIMEOUT_MS = 90_000;
+
 // ---------- POST /ai/ask ----------
 
 export const askAi = asyncHandler(async (req, res) => {
-    const { action, contextType, contextId, contextPage, message, conversationId } = req.body;
+  const { action, contextType, contextId, contextPage, contextScope, message, conversationId } = req.body;
+
+  // Checked up front so a missing message never leaves an empty conversation behind
+  if (action === 'chat' && !message) {
+    throw new ApiError(400, ErrorCodes.VALIDATION_ERROR, 'A message is required for chat');
+  }
 
   await enforceAiRateLimit(req.user);
 
-  const { contextText, goalId, nodeId } = await resolveContext(contextType, contextId, req.user._id, contextPage);
-  const systemPrompt = buildSystemPrompt(action, contextText);
+  const { contextText, goalId, nodeId, contextInfo = null, maxContextChars } = await resolveContext(
+    contextType,
+    contextId,
+    req.user._id,
+    contextPage,
+    contextScope
+  );
+
+  const systemPrompt = buildSystemPrompt(action, contextText, {
+    maxChars: maxContextChars,
+    scope: contextInfo?.scope ?? null,
+  });
+  const completionOptions = contextInfo?.scope === 'whole' ? { timeoutMs: LONG_CONTEXT_TIMEOUT_MS } : {};
 
   // ---------- Stateless quick actions ----------
   if (action !== 'chat') {
@@ -31,7 +50,7 @@ export const askAi = asyncHandler(async (req, res) => {
       { role: 'user', content: message || `Please ${action.replace('_', ' ')} the above.` },
     ];
 
-    const result = await generateCompletion(messages);
+    const result = await generateCompletion(messages, completionOptions);
 
     // Shaped specifically so the frontend's "Save as Note" button has
     // everything it needs without a second round trip
@@ -44,6 +63,7 @@ export const askAi = asyncHandler(async (req, res) => {
           suggestedTitle: `${action.replace('_', ' ')} — ${new Date().toLocaleDateString()}`,
           goalId,
           nodeId,
+          contextInfo,
         },
         'AI response generated'
       )
@@ -67,10 +87,6 @@ export const askAi = asyncHandler(async (req, res) => {
     });
   }
 
-  if (!message) {
-    throw new ApiError(400, ErrorCodes.VALIDATION_ERROR, 'A message is required for chat');
-  }
-
   const recentHistory = conversation.messages.slice(-CHAT_HISTORY_WINDOW).map((m) => ({
     role: m.role,
     content: m.content,
@@ -78,7 +94,7 @@ export const askAi = asyncHandler(async (req, res) => {
 
   const messages = [{ role: 'system', content: systemPrompt }, ...recentHistory, { role: 'user', content: message }];
 
-  const result = await generateCompletion(messages);
+  const result = await generateCompletion(messages, completionOptions);
 
   conversation.messages.push({ role: 'user', content: message });
   conversation.messages.push({ role: 'assistant', content: result });
@@ -87,7 +103,7 @@ export const askAi = asyncHandler(async (req, res) => {
   res.status(200).json(
     new ApiResponse(
       200,
-      { result, conversationId: conversation._id, goalId, nodeId },
+      { result, conversationId: conversation._id, goalId, nodeId, contextInfo },
       'AI response generated'
     )
   );

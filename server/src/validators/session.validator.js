@@ -7,6 +7,8 @@ const objectIdSchema = z
 
 export const startSessionSchema = z.object({
   nodeId: objectIdSchema,
+  // true = close whatever session is already running, then start this one
+  force: z.boolean().optional().default(false),
 });
 
 export const stopSessionSchema = z.object({

@@ -16,7 +16,7 @@ const DEFAULT_MAX_TOKENS = 4096;
 
 // Structured JSON calls (syllabus) are small and should fail fast;
 // chat answers can legitimately take longer to generate.
-const timeoutFor = (options) => (options.json ? 20_000 : 40_000);
+const timeoutFor = (options) => options.timeoutMs ?? (options.json ? 20_000 : 40_000);
 
 const TOKEN_LIMIT_ERROR = /max[_ ]?tokens|context (?:length|window)|too many tokens|maximum context/i;
 

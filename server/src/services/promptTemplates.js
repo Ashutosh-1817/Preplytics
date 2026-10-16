@@ -3,10 +3,10 @@
 // instruction, rather than the controller string-building prompts itself.
 // src/services/promptTemplates.js
 
-const MAX_CONTEXT_CHARS = 8000;
+const DEFAULT_MAX_CONTEXT_CHARS = 8000;
 
-const truncate = (text) =>
-  text.length > MAX_CONTEXT_CHARS ? text.slice(0, MAX_CONTEXT_CHARS) + '\n...[truncated]' : text;
+const truncate = (text, maxChars) =>
+  text.length > maxChars ? text.slice(0, maxChars) + '\n...[truncated]' : text;
 
 const BASE_RULES = `You are the AI assistant inside Preplytics, an elite preparation and adaptive study platform. You act as an expert, encouraging, and academically rigorous tutor.
 
@@ -26,9 +26,22 @@ Rules for every response:
 
 const wrapContext = (context) => `<context>\n${context}\n</context>`;
 
-export const buildSystemPrompt = (action, contextText) => {
-  const context = truncate(contextText || '');
+// options.maxChars: how much context to allow (a whole PDF gets far more than a note)
+// options.scope:    'whole' when the context is an entire PDF with [Page N] markers
+export const buildSystemPrompt = (
+  action,
+  contextText,
+  { maxChars = DEFAULT_MAX_CONTEXT_CHARS, scope = null } = {}
+) => {
+  const context = truncate(contextText || '', maxChars);
   const hasContext = context.trim().length > 0;
+  const wholeDoc = scope === 'whole';
+
+  // Only added when the context is a whole PDF
+  const wholeDocRule = wholeDoc
+    ? '\n- The content is an entire PDF with [Page N] markers. Cover it from start to end, not just the opening pages, and mention page numbers where they help.'
+    : '';
+
   const noContextFallback = (what) =>
     `${BASE_RULES}\n\nNo content was provided to ${what}. Ask the user to select a note, file, or topic first — do not invent content to fill the gap.`;
 
@@ -40,7 +53,7 @@ export const buildSystemPrompt = (action, contextText) => {
 Summarize the content inside the <context> tags below. Requirements:
 - 3-6 bullet points covering the core ideas, OR a short paragraph (under 150 words) if the content doesn't suit bullets
 - Preserve any specific facts, numbers, or terms that would matter for exam/study recall
-- Do not add your own commentary or opinions — summarize only what's given
+- Do not add your own commentary or opinions — summarize only what's given${wholeDocRule}
 
 ${wrapContext(context)}`;
 
@@ -52,7 +65,7 @@ Explain the content inside the <context> tags below, as if teaching someone enco
 - Start with a one-sentence plain-language overview
 - Break down any complex parts step by step
 - Use a concrete example or analogy if it genuinely aids understanding — skip it if it wouldn't
-- Keep it focused; don't pad with unnecessary background
+- Keep it focused; don't pad with unnecessary background${wholeDocRule}
 
 ${wrapContext(context)}`;
 
@@ -64,7 +77,7 @@ Convert the content inside the <context> tags below into structured study notes.
 - Use a clear heading for each major topic (## in Markdown)
 - Use bullet points for details under each heading, not dense paragraphs
 - Bold key terms a student should remember
-- Keep it scannable — this will be studied from later, not read once
+- Keep it scannable — this will be studied from later, not read once${wholeDocRule}
 
 ${wrapContext(context)}`;
 
@@ -72,12 +85,16 @@ ${wrapContext(context)}`;
       if (!hasContext) return noContextFallback('generate quiz questions from');
       return `${BASE_RULES}
 
-Generate exactly 5 quiz questions testing understanding of the content inside the <context> tags below. Requirements:
+Generate ${wholeDoc ? '10' : 'exactly 5'} quiz questions testing understanding of the content inside the <context> tags below. If the user's message asks for a different number of questions, use that number instead (up to 20). Requirements:
 - Mix of question types (recall, application, "why" questions) — not all the same style
 - Format each as:
   **Q1.** [question]
   **Answer:** [answer, with a one-line explanation if the answer isn't self-evident]
-- Questions must be answerable strictly from the given content — no outside knowledge required
+- Questions must be answerable strictly from the given content — no outside knowledge required${
+        wholeDoc
+          ? '\n- Spread the questions across different parts of the document, and end each answer with the page it comes from, like (p. 12)'
+          : ''
+      }
 
 ${wrapContext(context)}`;
 
@@ -88,7 +105,11 @@ ${wrapContext(context)}`;
       }
       return `${BASE_RULES}
 
-The user is currently viewing the content inside the <context> tags below. Use it as context when relevant to their questions, but you may also answer general questions beyond it.
+The user is currently viewing the content inside the <context> tags below. Use it as context when relevant to their questions, but you may also answer general questions beyond it.${
+        wholeDoc
+          ? ' It is an entire PDF; the [Page N] markers show where each part comes from, so cite page numbers when helpful.'
+          : ''
+      }
 
 ${wrapContext(context)}`;
   }

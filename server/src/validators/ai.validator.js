@@ -12,6 +12,7 @@ export const askAiSchema = z.object({
   contextType: z.enum(['note', 'node', 'file', 'none']).default('none'),
   contextId: objectIdSchema.nullable().optional().default(null),
   contextPage: z.number().int().min(1).max(10000).nullable().optional().default(null),
+  contextScope: z.enum(['page', 'whole']).nullable().optional().default(null),
   message: z.string().trim().max(2000).optional().default(''),
   conversationId: objectIdSchema.nullable().optional().default(null),
 });

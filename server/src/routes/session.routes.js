@@ -1,4 +1,3 @@
-
 import { Router } from 'express';
 import requireAuth from '../middleware/auth.middleware.js';
 import validate from '../middleware/validate.js';
@@ -8,6 +7,7 @@ import {
   manualSessionSchema,
 } from '../validators/session.validator.js';
 import {
+  getActiveSession,
   startSession,
   stopSession,
   logManualSession,
@@ -20,6 +20,7 @@ const router = Router();
 
 router.use(requireAuth);
 
+router.get('/active', getActiveSession);
 router.post('/start', validate(startSessionSchema), startSession);
 router.post('/stop', validate(stopSessionSchema), stopSession);
 router.post('/manual', validate(manualSessionSchema), logManualSession);

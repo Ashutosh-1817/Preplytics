@@ -1,10 +1,12 @@
 import Session from '../models/Session.model.js';
 import RoadmapNode from '../models/RoadmapNode.model.js';
+import Goal from '../models/Goal.model.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import ErrorCodes from '../utils/errorCodes.js';
 import asyncHandler from '../middleware/asyncHandler.js';
 import { recalculateGoalEfficiency } from '../services/efficiency.service.js';
+import { getOwnedGoalOrFail } from './goal.controller.js';
 
 const MIN_LOGGABLE_SECONDS = 30; // below this, treat as an accidental tap — discard entirely
 
@@ -32,23 +34,109 @@ const reverseSessionFromNode = async (session) => {
   }
 };
 
-// ---------- POST /sessions/start ----------
-
-export const startSession = asyncHandler(async (req, res) => {
-  const { nodeId } = req.body;
-
-  const node = await RoadmapNode.findOne({ _id: nodeId });
+// A node must belong to one of the caller's own goals. Without this check any
+// logged-in user could start, log or reset time on someone else's topic.
+const getOwnedNodeOrFail = async (nodeId, userId) => {
+  const node = await RoadmapNode.findById(nodeId);
   if (!node) {
     throw new ApiError(404, ErrorCodes.NOT_FOUND, 'Roadmap node not found');
   }
+  await getOwnedGoalOrFail(node.goalId, userId);
+  return node;
+};
 
-  const activeSession = await Session.findOne({ owner: req.user._id, endedAt: null });
-  if (activeSession) {
+// Closes a running timer session. Used by "Stop" and by "close the old one
+// and start this one", so both behave identically.
+const finalizeSession = async (session) => {
+  const endedAt = new Date();
+  const rawSeconds = Math.floor((endedAt - session.startedAt) / 1000);
+
+  // Too short to be real study time — discard the session entirely
+  // rather than counting it as a rounded-up minute. This is what
+  // prevents quick node-switching (which auto-stops the timer) from
+  // inflating actualMinutesSpent with several near-zero sessions.
+  if (rawSeconds < MIN_LOGGABLE_SECONDS) {
+    await session.deleteOne();
+    return { session: null, discarded: true };
+  }
+
+  session.endedAt = endedAt;
+  session.durationMinutes = Math.max(1, Math.round(rawSeconds / 60));
+  await session.save();
+
+  await applySessionToNode(session);
+
+  return { session, discarded: false };
+};
+
+// What the UI needs to say WHICH session is running. Titles are null when the
+// goal or topic has since been deleted.
+const describeRunningSession = async (session) => {
+  const [goal, node] = await Promise.all([
+    Goal.findById(session.goalId).select('title'),
+    RoadmapNode.findById(session.nodeId).select('title'),
+  ]);
+
+  return {
+    sessionId: session._id,
+    goalId: session.goalId,
+    goalTitle: goal?.title ?? null,
+    nodeId: session.nodeId,
+    nodeTitle: node?.title ?? null,
+    startedAt: session.startedAt,
+    elapsedMinutes: Math.max(0, Math.floor((Date.now() - session.startedAt.getTime()) / 60000)),
+  };
+};
+
+// ---------- GET /sessions/active ----------
+// The single source of truth for "is a timer running, and on what?".
+// (GET /sessions only lists FINISHED sessions, so it can never answer this.)
+
+export const getActiveSession = asyncHandler(async (req, res) => {
+  const running = await Session.findOne({ owner: req.user._id, endedAt: null }).sort({ startedAt: -1 });
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      { session: running ? await describeRunningSession(running) : null },
+      'Active session fetched'
+    )
+  );
+});
+
+// ---------- POST /sessions/start ----------
+// 409 + details of the running session when one already exists.
+// Send { force: true } to close it (its time is saved) and start this one.
+
+export const startSession = asyncHandler(async (req, res) => {
+  const { nodeId, force } = req.body;
+
+  const node = await getOwnedNodeOrFail(nodeId, req.user._id);
+
+  // Normally at most one, but older races could have left several open
+  const runningSessions = await Session.find({ owner: req.user._id, endedAt: null }).sort({ startedAt: -1 });
+
+  if (runningSessions.length > 0 && !force) {
+    const activeSession = await describeRunningSession(runningSessions[0]);
+    const what = activeSession.goalTitle ? `"${activeSession.goalTitle}"` : 'another topic';
+
     throw new ApiError(
-      400,
-      ErrorCodes.VALIDATION_ERROR,
-      'A session is already running. Stop it before starting another.'
+      409,
+      ErrorCodes.SESSION_ALREADY_RUNNING,
+      `A session for ${what} is currently running. Stop it before starting another.`,
+      { activeSession }
     );
+  }
+
+  // force: save and close whatever is running before starting the new one
+  const closedSessions = [];
+  for (const running of runningSessions) {
+    const result = await finalizeSession(running);
+    closedSessions.push({
+      sessionId: running._id,
+      discarded: result.discarded,
+      durationMinutes: result.session?.durationMinutes ?? 0,
+    });
   }
 
   const session = await Session.create({
@@ -64,7 +152,7 @@ export const startSession = asyncHandler(async (req, res) => {
     await node.save();
   }
 
-  res.status(201).json(new ApiResponse(201, { session }, 'Session started'));
+  res.status(201).json(new ApiResponse(201, { session, closedSessions }, 'Session started'));
 });
 
 // ---------- POST /sessions/stop ----------
@@ -80,27 +168,15 @@ export const stopSession = asyncHandler(async (req, res) => {
     throw new ApiError(400, ErrorCodes.VALIDATION_ERROR, 'Session already stopped');
   }
 
-  const endedAt = new Date();
-  const rawSeconds = Math.floor((endedAt - session.startedAt) / 1000);
+  const result = await finalizeSession(session);
 
-  // Too short to be real study time — discard the session entirely
-  // rather than counting it as a rounded-up minute. This is what
-  // prevents quick node-switching (which auto-stops the timer) from
-  // inflating actualMinutesSpent with several near-zero sessions.
-  if (rawSeconds < MIN_LOGGABLE_SECONDS) {
-    await session.deleteOne();
+  if (result.discarded) {
     return res
       .status(200)
       .json(new ApiResponse(200, { session: null, discarded: true }, 'Session too short to log — not recorded'));
   }
 
-  session.endedAt = endedAt;
-  session.durationMinutes = Math.max(1, Math.round(rawSeconds / 60));
-  await session.save();
-
-  await applySessionToNode(session);
-
-  res.status(200).json(new ApiResponse(200, { session, discarded: false }, 'Session stopped'));
+  res.status(200).json(new ApiResponse(200, { session: result.session, discarded: false }, 'Session stopped'));
 });
 
 // ---------- POST /sessions/manual ----------
@@ -108,10 +184,7 @@ export const stopSession = asyncHandler(async (req, res) => {
 export const logManualSession = asyncHandler(async (req, res) => {
   const { nodeId, durationMinutes, startedAt } = req.body;
 
-  const node = await RoadmapNode.findOne({ _id: nodeId });
-  if (!node) {
-    throw new ApiError(404, ErrorCodes.NOT_FOUND, 'Roadmap node not found');
-  }
+  const node = await getOwnedNodeOrFail(nodeId, req.user._id);
 
   const started = new Date(startedAt);
 
@@ -172,10 +245,7 @@ export const deleteSession = asyncHandler(async (req, res) => {
 export const resetNodeSessions = asyncHandler(async (req, res) => {
   const { nodeId } = req.params;
 
-  const node = await RoadmapNode.findOne({ _id: nodeId });
-  if (!node) {
-    throw new ApiError(404, ErrorCodes.NOT_FOUND, 'Roadmap node not found');
-  }
+  const node = await getOwnedNodeOrFail(nodeId, req.user._id);
 
   await Session.deleteMany({ owner: req.user._id, nodeId });
   await RoadmapNode.findByIdAndUpdate(nodeId, { actualMinutesSpent: 0 });
