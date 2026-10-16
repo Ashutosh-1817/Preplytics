@@ -1,10 +1,9 @@
-
-
 import { createContext, useContext, useState, useCallback } from 'react';
 
 const AIDrawerContext = createContext(null);
 
-const EMPTY_CONTEXT = { type: 'none', id: null, label: '', page: null };
+// scope only matters for a PDF: 'page' = the page being viewed, 'whole' = every page
+const EMPTY_CONTEXT = { type: 'none', id: null, label: '', page: null, scope: 'page' };
 
 export function AIDrawerProvider({ children }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,9 +27,22 @@ export function AIDrawerProvider({ children }) {
     setDrawerMode('docked');
   }, []);
 
-  // page is only meaningful for file context (the PDF page being read)
+  // page is only meaningful for file context (the PDF page being read).
+  // The viewer calls this on every page turn, so the scope the user picked
+  // is kept as long as it is the same file; a different file starts on 'page'.
   const setDrawerContext = useCallback((type, id, label, page = null) => {
-    setContext({ type, id, label, page });
+    setContext((prev) => ({
+      type,
+      id,
+      label,
+      page,
+      scope: type === 'file' && prev.type === 'file' && prev.id === id ? prev.scope : 'page',
+    }));
+  }, []);
+
+  // 'page' | 'whole'. Ignored unless a PDF is the current context.
+  const setContextScope = useCallback((scope) => {
+    setContext((prev) => (prev.type === 'file' ? { ...prev, scope } : prev));
   }, []);
 
   const clearDrawerContext = useCallback(() => setContext(EMPTY_CONTEXT), []);
@@ -46,6 +58,7 @@ export function AIDrawerProvider({ children }) {
         toggleDrawer,
         context,
         setDrawerContext,
+        setContextScope,
         clearDrawerContext,
       }}
     >

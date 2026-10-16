@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import './ConfirmDialog.css';
 
-function ConfirmDialog({ title, message, confirmLabel = 'Confirm', danger = true, onConfirm, onCancel }) {
+function ConfirmDialog({ title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = true, onConfirm, onCancel }) {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ function ConfirmDialog({ title, message, confirmLabel = 'Confirm', danger = true
         <h3 className="confirm-title">{title}</h3>
         <p className="confirm-message">{message}</p>
         <div className="confirm-actions">
-          <button className="btn btn-ghost" onClick={onCancel} disabled={busy}>Cancel</button>
+            <button className="btn btn-ghost" onClick={onCancel} disabled={busy}>{cancelLabel}</button>
           <button
             className={`btn ${danger ? 'confirm-btn-danger' : 'btn-primary'}`}
             onClick={handleConfirm}

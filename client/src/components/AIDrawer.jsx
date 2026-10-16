@@ -34,7 +34,7 @@ const deriveChatTitle = (text) => {
 
 function AIDrawer() {
   const {
-    isOpen, closeDrawer, context, setDrawerContext, clearDrawerContext,
+    isOpen, closeDrawer, context, setDrawerContext, setContextScope, clearDrawerContext,
     drawerMode: viewMode, setDrawerMode: setViewMode,
   } = useAIDrawer();
 
@@ -65,6 +65,12 @@ function AIDrawer() {
 
   const contextName = context.label.replace(CONTEXT_PREFIX, '');
 
+  const isFile = context.type === 'file';
+  const hasPage = isFile && Boolean(context.page);
+  // A PDF with no page open (attached with the paperclip) can only be read as a whole
+  const scope = isFile && (context.scope === 'whole' || !hasPage) ? 'whole' : 'page';
+  const scopeLabel = scope === 'whole' ? 'Whole PDF' : `Page ${context.page}`;
+
   const runRequest = async ({ action, message }) => {
     setError('');
     setIsLoading(true);
@@ -76,7 +82,8 @@ function AIDrawer() {
         action,
         contextType: context.type,
         contextId: context.id,
-        contextPage: context.type === 'file' ? context.page : null,
+        contextPage: isFile && scope === 'page' ? context.page : null,
+        contextScope: isFile ? scope : null,
         message: message || '',
         conversationId: action === 'chat' ? conversationId : null,
       });
@@ -93,7 +100,14 @@ function AIDrawer() {
 
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: result.result, goalId: result.goalId, nodeId: result.nodeId, suggestedTitle },
+        {
+          role: 'assistant',
+          content: result.result,
+          goalId: result.goalId,
+          nodeId: result.nodeId,
+          suggestedTitle,
+          contextInfo: result.contextInfo,
+        },
       ]);
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Something went wrong. Please try again.');
@@ -201,9 +215,9 @@ function AIDrawer() {
     context.type === 'none'
       ? 'Ask a general question, open a note or topic for quick actions, or tap the paperclip to chat about a PDF.'
       : context.type === 'file'
-        ? context.page
-          ? `Ask about page ${context.page} of "${contextName}", or use a quick action above. Turn the page and ask again.`
-          : `The AI reads the start of "${contextName}". Open it in Files to ask about a specific page.`
+        ? scope === 'whole'
+          ? `The AI reads the whole of "${contextName}". Ask for a summary, notes or a quiz across the document.`
+          : `Ask about page ${context.page} of "${contextName}", or use a quick action above. Turn the page and ask again.`
         : `Ask something about "${contextName}", or use a quick action above.`;
 
   return (
@@ -214,9 +228,26 @@ function AIDrawer() {
           <div className="ai-brand-text">
             <span className="ai-brand-title">Ask AI</span>
             {context.type !== 'none' ? (
-              <span className="ai-context-chip">
-                <ContextIcon size={12} /> {contextName}
-                {context.type === 'file' && context.page ? ` · p.${context.page}` : ''}
+             <span className="ai-context-row">
+                <span className="ai-context-chip">
+                  <ContextIcon size={12} />
+                  <span className="ai-context-name">{contextName}</span>
+                  {isFile && <span className="ai-context-scope">{scopeLabel}</span>}
+                </span>
+                {hasPage && (
+                  <button
+                    type="button"
+                    className="ai-scope-toggle"
+                    onClick={() => setContextScope(scope === 'whole' ? 'page' : 'whole')}
+                    title={
+                      scope === 'whole'
+                        ? 'Only read the page you are viewing'
+                        : 'Read every page of this PDF (good for quizzes and summaries)'
+                    }
+                  >
+                    {scope === 'whole' ? 'Switch to page' : 'Switch to whole PDF'}
+                  </button>
+                )}
               </span>
             ) : (
               <span className="ai-brand-sub">General assistant</span>
@@ -314,6 +345,13 @@ function AIDrawer() {
                     )}
                   </div>
 
+                  {msg.role === 'assistant' && msg.contextInfo?.truncated && (
+                    <p className="ai-context-note">
+                      This PDF is long, so the AI read pages 1–{msg.contextInfo.pagesIncluded} of{' '}
+                      {msg.contextInfo.totalPages}. Switch to a single page to ask about the rest.
+                    </p>
+                  )}
+
                   {msg.role === 'assistant' && (
                     <div className="ai-msg-actions">
                       <button className="ai-action-btn" onClick={() => handleCopy(msg.content, i)}>
@@ -354,9 +392,9 @@ function AIDrawer() {
                   <span className="ai-attached-name">{contextName}</span>
                   <span
                     className="ai-attached-page"
-                    title={context.page ? 'The AI is reading this page' : 'The AI reads the start of the document. Open it in Files to pick a page.'}
+                    title={scope === 'whole' ? 'The AI is reading the whole PDF' : 'The AI is reading this page only'}
                   >
-                    {context.page ? `p.${context.page}` : 'start'}
+                    {scope === 'whole' ? 'whole PDF' : `p.${context.page}`}
                   </span>
                   <button type="button" onClick={clearDrawerContext} aria-label="Detach file">
                     <X size={13} />

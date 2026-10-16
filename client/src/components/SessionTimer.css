@@ -86,3 +86,43 @@
 .session-reset-all:hover {
   color: var(--alert);
 }
+
+
+
+/* ---------- "A timer is running on another topic" banner ---------- */
+
+.session-other {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--warm) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warm) 32%, transparent);
+}
+
+.session-other-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--text-xs);
+}
+
+.session-other-text strong {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.session-other-text span {
+  color: var(--ink-muted);
+}
+
+.session-other-btn {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+}

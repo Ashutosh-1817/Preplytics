@@ -1,14 +1,16 @@
-
 import { useState, useEffect, useRef } from 'react';
 import {
   startSession,
   stopSession,
   logManualSession,
   fetchSessions,
+  fetchActiveSession,
+  getSessionConflict,
   deleteSession,
   resetNodeSessions,
 } from '../services/sessions.api.js';
 import { readActiveSession, writeActiveSession, clearActiveSession } from '../utils/activeSessionStorage.js';
+import SessionConflictDialog from './SessionConflictDialog.jsx';
 import './SessionTimer.css';
 
 const formatElapsed = (seconds) => {
@@ -20,8 +22,25 @@ const formatElapsed = (seconds) => {
     : `${m}:${String(s).padStart(2, '0')}`;
 };
 
+const formatStartedAt = (iso) => {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  return d.toDateString() === new Date().toDateString()
+    ? `today at ${time}`
+    : `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} at ${time}`;
+};
+
+// Sessions this component has asked the server to stop, but which the server
+// may not have finished stopping yet. When you switch topics the old timer is
+// stopped in the background; this stops the new topic's "what's running?"
+// check from mistaking that dying session for a different one.
+const stoppingSessionIds = new Set();
+
 function SessionTimer({ nodeId, onSessionLogged }) {
   const [activeSession, setActiveSession] = useState(null);
+  const [otherSession, setOtherSession] = useState(null); // a timer running on a DIFFERENT topic
+  const [conflict, setConflict] = useState(null); // opens the "close it and start this one?" dialog
+  const [isStarting, setIsStarting] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -37,10 +56,20 @@ function SessionTimer({ nodeId, onSessionLogged }) {
     activeSessionRef.current = activeSession;
   }, [activeSession]);
 
-  onSessionLoggedRef.current = onSessionLogged;
+  useEffect(() => {
+    onSessionLoggedRef.current = onSessionLogged;
+  });
 
   const loadRecentSessions = () => {
     fetchSessions({ nodeId }).then(setRecentSessions).catch(() => setRecentSessions([]));
+  };
+
+  // Shows the timer for a session that is running on THIS topic
+  const adoptRunningSession = (running) => {
+    setActiveSession({ _id: running.sessionId, startedAt: running.startedAt });
+    setElapsed(Math.max(0, Math.floor((Date.now() - new Date(running.startedAt).getTime()) / 1000)));
+    setOtherSession(null);
+    writeActiveSession(running.sessionId, running.nodeId, running.startedAt);
   };
 
   // ---------- auto-stop + save when switching nodes or unmounting ----------
@@ -49,40 +78,65 @@ function SessionTimer({ nodeId, onSessionLogged }) {
       const running = activeSessionRef.current;
       if (running) {
         clearActiveSession();
+        stoppingSessionIds.add(running._id);
         stopSession(running._id)
           .then(() => onSessionLoggedRef.current?.())
-          .catch(() => {});
+          .catch(() => {})
+          .finally(() => stoppingSessionIds.delete(running._id));
       }
     };
   }, [nodeId]);
 
-  // ---------- resume from localStorage + verify against backend ----------
+  // ---------- find out what is REALLY running (the server is the source of truth) ----------
   useEffect(() => {
+    let cancelled = false;
+
     setError('');
     setInfo('');
     setShowManual(false);
+    setConflict(null);
+    setOtherSession(null);
     loadRecentSessions();
 
+    // Show a remembered timer instantly while the server confirms it
     const stored = readActiveSession();
-
     if (stored && stored.nodeId === nodeId) {
       setActiveSession({ _id: stored.sessionId, startedAt: stored.startedAt });
       setElapsed(Math.floor((Date.now() - new Date(stored.startedAt).getTime()) / 1000));
-
-      fetchSessions({ nodeId })
-        .then((sessions) => {
-          const stillRunning = sessions.find((s) => s._id === stored.sessionId);
-          if (!stillRunning) {
-            clearActiveSession();
-            setActiveSession(null);
-            setElapsed(0);
-          }
-        })
-        .catch(() => {});
     } else {
       setActiveSession(null);
       setElapsed(0);
     }
+
+    fetchActiveSession()
+      .then((found) => {
+        if (cancelled) return;
+
+        // The old topic's timer is still being stopped in the background: ignore it
+        const running = found && stoppingSessionIds.has(found.sessionId) ? null : found;
+
+        if (!running) {
+          clearActiveSession();
+          setActiveSession(null);
+          setElapsed(0);
+        } else if (running.nodeId === nodeId) {
+          adoptRunningSession(running);
+        } else {
+          // Running, but on another topic: say so up front instead of failing later
+          writeActiveSession(running.sessionId, running.nodeId, running.startedAt);
+          setActiveSession(null);
+          setElapsed(0);
+          setOtherSession(running);
+        }
+      })
+      .catch(() => {
+        // Offline or a failed request: keep showing what we remembered
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodeId]);
 
   useEffect(() => {
@@ -94,18 +148,41 @@ function SessionTimer({ nodeId, onSessionLogged }) {
     return () => clearInterval(interval);
   }, [activeSession]);
 
-  const handleStart = async () => {
+  // force = false: the first attempt.
+  // force = true: after the user said "Yes, close the other one".
+  const attemptStart = async (force = false) => {
     setError('');
     setInfo('');
+    setIsStarting(true);
+
     try {
-      const session = await startSession(nodeId);
+      const session = await startSession(nodeId, { force });
       setActiveSession(session);
+      setElapsed(0);
+      setOtherSession(null);
+      setConflict(null);
       writeActiveSession(session._id, nodeId, session.startedAt);
-      onSessionLogged();
+      onSessionLoggedRef.current?.();
     } catch (err) {
-      setError(err.response?.data?.error?.message || 'Could not start session.');
+      const running = getSessionConflict(err);
+
+      if (running && running.nodeId === nodeId) {
+        // Already running on THIS topic (e.g. started in another tab): just show it
+        setConflict(null);
+        adoptRunningSession(running);
+      } else if (running) {
+        // Running on another topic: ask before closing it
+        setConflict(running);
+      } else {
+        setConflict(null);
+        setError(err.response?.data?.error?.message || 'Could not start session.');
+      }
+    } finally {
+      setIsStarting(false);
     }
   };
+
+  const handleStart = () => attemptStart(false);
 
   const handleStop = async () => {
     setError('');
@@ -118,10 +195,25 @@ function SessionTimer({ nodeId, onSessionLogged }) {
       if (result.discarded) {
         setInfo('That was too short to log — not recorded.');
       }
-      onSessionLogged();
+      onSessionLoggedRef.current?.();
       loadRecentSessions();
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Could not stop session.');
+    }
+  };
+
+  // Stops the timer that is running on a different topic
+  const handleStopOther = async () => {
+    setError('');
+    setInfo('');
+    try {
+      const result = await stopSession(otherSession.sessionId);
+      clearActiveSession();
+      setOtherSession(null);
+      setInfo(result.discarded ? 'That timer was too short to log — not recorded.' : 'Stopped it and saved the time.');
+      onSessionLoggedRef.current?.();
+    } catch (err) {
+      setError(err.response?.data?.error?.message || 'Could not stop that session.');
     }
   };
 
@@ -138,7 +230,7 @@ function SessionTimer({ nodeId, onSessionLogged }) {
         startedAt: new Date().toISOString(),
       });
       setShowManual(false);
-      onSessionLogged();
+      onSessionLoggedRef.current?.();
       loadRecentSessions();
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Could not log session.');
@@ -150,7 +242,7 @@ function SessionTimer({ nodeId, onSessionLogged }) {
   const handleUndoSession = async (sessionId) => {
     try {
       await deleteSession(sessionId);
-      onSessionLogged();
+      onSessionLoggedRef.current?.();
       loadRecentSessions();
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Could not remove that session.');
@@ -161,7 +253,7 @@ function SessionTimer({ nodeId, onSessionLogged }) {
     if (!confirm('Reset all logged time for this topic back to zero? This removes every session for it.')) return;
     try {
       await resetNodeSessions(nodeId);
-      onSessionLogged();
+      onSessionLoggedRef.current?.();
       loadRecentSessions();
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Could not reset time.');
@@ -173,6 +265,21 @@ function SessionTimer({ nodeId, onSessionLogged }) {
       {error && <p className="auth-error" style={{ fontSize: 'var(--text-xs)' }}>{error}</p>}
       {info && <p className="text-muted session-info" style={{ fontSize: 'var(--text-xs)' }}>{info}</p>}
 
+      {otherSession && !activeSession && (
+        <div className="session-other" role="status">
+          <div className="session-other-text">
+            <strong>
+              A timer is running on {otherSession.nodeTitle ? `“${otherSession.nodeTitle}”` : 'a topic that no longer exists'}
+              {otherSession.goalTitle ? ` in “${otherSession.goalTitle}”` : ''}
+            </strong>
+            <span>Started {formatStartedAt(otherSession.startedAt)}</span>
+          </div>
+          <button type="button" className="btn btn-ghost session-other-btn" onClick={handleStopOther}>
+            Stop it
+          </button>
+        </div>
+      )}
+
       {activeSession ? (
         <div className="session-timer-active">
           <span className="session-timer-clock text-stat">{formatElapsed(elapsed)}</span>
@@ -180,7 +287,7 @@ function SessionTimer({ nodeId, onSessionLogged }) {
         </div>
       ) : (
         <div className="session-timer-idle">
-          <button className="btn btn-primary" onClick={handleStart}>▶ Start studying</button>
+          <button className="btn btn-primary" onClick={handleStart} disabled={isStarting}>▶ Start studying</button>
           <button className="btn btn-ghost" onClick={() => setShowManual((s) => !s)}>Log time manually</button>
         </div>
       )}
@@ -220,6 +327,14 @@ function SessionTimer({ nodeId, onSessionLogged }) {
       <button type="button" className="session-reset-all" onClick={handleResetAll}>
         Reset total time for this topic
       </button>
+
+      {conflict && (
+        <SessionConflictDialog
+          conflict={conflict}
+          onConfirm={() => attemptStart(true)}
+          onCancel={() => setConflict(null)}
+        />
+      )}
     </div>
   );
 }

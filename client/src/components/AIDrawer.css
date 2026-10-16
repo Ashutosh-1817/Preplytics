@@ -763,3 +763,54 @@
 .ai-attached-chip button:hover { 
   background: color-mix(in srgb, var(--signal, #6366f1) 22%, transparent); 
 }
+
+/* ---------- PDF scope: header chip parts, toggle, truncation note ---------- */
+
+.ai-context-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* The file name shrinks with an ellipsis; the scope label never gets cut off */
+.ai-context-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-context-scope {
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: var(--radius-pill, 9999px);
+  background: color-mix(in srgb, var(--signal, #6366f1) 18%, transparent);
+  font-weight: 700;
+}
+
+.ai-scope-toggle {
+  padding: 2px 9px;
+  border-radius: var(--radius-pill, 9999px);
+  border: 1px solid var(--border, #e2e8f0);
+  background: transparent;
+  color: var(--ink-muted, #64748b);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color var(--duration-fast, 120ms) var(--ease-standard, ease),
+              border-color var(--duration-fast, 120ms) var(--ease-standard, ease);
+}
+
+.ai-scope-toggle:hover {
+  color: var(--signal, #6366f1);
+  border-color: var(--signal, #6366f1);
+}
+
+.ai-context-note {
+  margin-top: 6px;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.4;
+  color: var(--ink-muted, #64748b);
+}

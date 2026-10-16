@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Flame, Clock, Target } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { fetchOverview, fetchStreak, fetchHeatmap, fetchTodayTasks } from '../services/dashboard.api.js';
-import { startSession } from '../services/sessions.api.js';
-import { readActiveSession, writeActiveSession } from '../utils/activeSessionStorage.js';
+import { startSession, getSessionConflict } from '../services/sessions.api.js';
+import { writeActiveSession } from '../utils/activeSessionStorage.js';
+import SessionConflictDialog from '../components/SessionConflictDialog.jsx';
 import { KpiCard, Sparkline, GoalProgressWidget, WeeklyChart, TodayTaskCard } from '../components/DashboardWidgets.jsx';
 import Heatmap from '../components/Heatmap.jsx';
 import './Dashboard.css';
@@ -28,6 +29,7 @@ function Dashboard() {
   const [goalFilter, setGoalFilter] = useState('all');
   const [startingId, setStartingId] = useState(null);
   const [startError, setStartError] = useState('');
+  const [conflict, setConflict] = useState(null); 
 
   useEffect(() => {
     fetchOverview().then(setOverview).catch(() => setOverview({ goals: [] }));
@@ -66,7 +68,9 @@ function Dashboard() {
 
   const doneCount = visibleTasks?.filter((t) => t.status === 'completed').length ?? 0;
 
-  const handleStart = async (task) => {
+  // force = false: the first attempt.
+  // force = true: after the user said "Yes, close the other one".
+  const attemptStart = async (task, force = false) => {
     setStartError('');
     setStartingId(task._id);
 
@@ -74,20 +78,33 @@ function Dashboard() {
     const goalId = task.goalId?._id;
 
     try {
-      const session = await startSession(nodeId);
+      const session = await startSession(nodeId, { force });
       writeActiveSession(session._id, nodeId, session.startedAt);
+      setConflict(null);
       navigate(`/goals/${goalId}?node=${nodeId}`);
     } catch (err) {
-      const stored = readActiveSession();
-      if (stored?.nodeId === nodeId) {
+      const running = getSessionConflict(err);
+
+      if (running && running.nodeId === nodeId) {
         // Already running on this exact topic — just resume it
+        writeActiveSession(running.sessionId, nodeId, running.startedAt);
+        setConflict(null);
         navigate(`/goals/${goalId}?node=${nodeId}`);
-      } else {
-        setStartError(err.response?.data?.error?.message || 'Could not start the timer.');
-        setStartingId(null);
+        return;
       }
+
+      if (running) {
+        // Running on a different topic: ask before closing it
+        setConflict({ running, task });
+      } else {
+        setConflict(null);
+        setStartError(err.response?.data?.error?.message || 'Could not start the timer.');
+      }
+      setStartingId(null);
     }
   };
+
+  const handleStart = (task) => attemptStart(task, false);
 
   return (
     <div className="dashboard">
@@ -209,6 +226,14 @@ function Dashboard() {
       <section className="dashboard-section">
         {heatmap && heatmap.length > 0 && <Heatmap data={heatmap} />}
       </section>
+
+      {conflict && (
+        <SessionConflictDialog
+          conflict={conflict.running}
+          onConfirm={() => attemptStart(conflict.task, true)}
+          onCancel={() => setConflict(null)}
+        />
+      )}
     </div>
   );
 }
