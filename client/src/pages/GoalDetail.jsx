@@ -1,8 +1,8 @@
 
 
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Sparkles, CalendarPlus, RefreshCw, Pencil, CalendarDays, Clock } from 'lucide-react';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { Sparkles, CalendarPlus, RefreshCw, Pencil, CalendarDays, Clock ,BookOpen} from 'lucide-react';
 import {
   fetchGoal,
   fetchRoadmapTree,
@@ -20,6 +20,10 @@ import EditGoalModal from '../components/EditGoalModal.jsx';
 import SessionTimer from '../components/SessionTimer.jsx';
 import FileAttachments from '../components/files/FileAttachments.jsx';
 import './GoalDetail.css';
+import GoalRoadmapWizard from '../components/GoalRoadmapWizard.jsx';
+import GoalOverviewCard from '../components/GoalOverviewCard.jsx';
+import GoalSubjectsModal from '../components/GoalSubjectsModal.jsx';
+import { markSessionHandoff } from '../utils/sessionHandoff.js';
 
 const findNodeById = (nodes, id) => {
   for (const node of nodes) {
@@ -37,6 +41,7 @@ const overloadNote = (r) =>
 
 function GoalDetail() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { goalId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { setDrawerContext, clearDrawerContext } = useAIDrawer();
@@ -49,6 +54,10 @@ function GoalDetail() {
   const [showScheduleSuccess, setShowScheduleSuccess] = useState(false);
   const [showSyllabusModal, setShowSyllabusModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showRoadmapWizard, setShowRoadmapWizard] = useState(false);
+  const [pendingWizard, setPendingWizard] = useState(Boolean(location.state?.autoGenerate));
+  const [subjectForModal, setSubjectForModal] = useState(null);
+  const [showSubjectsModal, setShowSubjectsModal] = useState(false);
 
   const selectedNode = tree && selectedNodeId ? findNodeById(tree, selectedNodeId) : null;
 
@@ -86,6 +95,11 @@ function GoalDetail() {
   }, [tree, selectedNodeId, clearDrawerContext]);
 
   useEffect(() => () => clearDrawerContext(), [clearDrawerContext]);
+
+  useEffect(() => {
+  if (location.state?.autoGenerate) navigate(location.pathname, { replace: true, state: null });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAddSubject = async (e) => {
     e.preventDefault();
@@ -133,15 +147,46 @@ function GoalDetail() {
     }
   };
 
-  const handleSyllabusSaved = (result) => {
-    setShowSyllabusModal(false);
-    setScheduleMessage(
-      `Syllabus saved: ${result.chaptersCreated} chapters, ${result.subtopicsCreated} subtopics.` +
-        (result.schedule.created > 0 ? ` ${result.schedule.created} tasks scheduled.${overloadNote(result.schedule)}` : '')
-    );
-    loadAll();
-    if (result.schedule.created > 0) setShowScheduleSuccess(true);
-  };
+  // const handleSyllabusSaved = (result) => {
+  //   setShowSyllabusModal(false);
+  //   setScheduleMessage(
+  //     `Syllabus saved: ${result.chaptersCreated} chapters, ${result.subtopicsCreated} subtopics.` +
+  //       (result.schedule.created > 0 ? ` ${result.schedule.created} tasks scheduled.${overloadNote(result.schedule)}` : '')
+  //   );
+  //   loadAll();
+  //   if (result.schedule.created > 0) setShowScheduleSuccess(true);
+  // };
+
+ const handleSubjectRoadmapSaved = async (result) => {
+  const title = subjectForModal?.title;
+  setSubjectForModal(null);
+  setScheduleMessage(
+    `“${title}”: ${result.chaptersCreated} chapters, ${result.subtopicsCreated} subtopics added.` +
+      (result.schedule.created > 0 ? ` ${result.schedule.created} tasks scheduled.${overloadNote(result.schedule)}` : '')
+  );
+  await loadAll();
+  if (result.schedule.created > 0) setShowScheduleSuccess(true);
+};
+
+const handleSubjectsSaved = async (result) => {
+  setShowSubjectsModal(false);
+  setScheduleMessage(
+    `${result.subjectsCreated} subject${result.subjectsCreated === 1 ? '' : 's'} added` +
+      (result.skipped > 0 ? ` (${result.skipped} already existed)` : '') +
+      '. Open a subject and generate its roadmap when you are ready.'
+  );
+  await loadAll();
+};
+
+  const handleRoadmapSaved = (result) => {
+  setShowRoadmapWizard(false);
+  setScheduleMessage(
+    `Roadmap ready: ${result.subjectsCreated} subjects, ${result.chaptersCreated} chapters, ${result.subtopicsCreated} topics.` +
+      (result.schedule.created > 0 ? ` ${result.schedule.created} tasks scheduled.${overloadNote(result.schedule)}` : '')
+  );
+  loadAll();
+  if (result.schedule.created > 0) setShowScheduleSuccess(true);
+};
 
   const handleGoalSaved = async () => {
     setShowEditModal(false);
@@ -188,11 +233,18 @@ function GoalDetail() {
           <button className="btn btn-ghost" onClick={handleRegenerateSchedule}>
             <RefreshCw size={16} /> Regenerate
           </button>
-          <button className="btn btn-primary" onClick={() => setShowSyllabusModal(true)}>
-            <Sparkles size={16} /> AI Generate Roadmap
-          </button>
         </div>
       </div>
+
+      <GoalOverviewCard
+        goalId={goalId}
+        initialOverview={goal.overview}
+        autoGenerate={pendingWizard}
+        onSettled={() => {
+          setPendingWizard(false);
+          setShowRoadmapWizard(true);
+        }}
+      />
 
       {scheduleMessage && (
         <div className="surface" style={{ padding: 'var(--space-3) var(--space-4)', marginBottom: 'var(--space-4)', borderRadius: 'var(--radius-sm)' }}>
@@ -207,10 +259,30 @@ function GoalDetail() {
           </div>
 
           {tree.length === 0 && (
-            <p className="text-muted" style={{ padding: 'var(--space-4)' }}>No subjects yet — add your first one below.</p>
+            <div style={{ padding: 'var(--space-4)' }}>
+              <h3 style={{ marginBottom: 'var(--space-2)' }}>Start your roadmap</h3>
+              <ol className="text-muted" style={{ fontSize: 'var(--text-sm)', paddingLeft: '1.2rem', display: 'grid', gap: 4 }}>
+                <li>Optional: open “Know Your Goal” above for a quick briefing.</li>
+                <li>Generate the main subjects and review the list.</li>
+                <li>Open a subject and generate its chapters and topics, one subject at a time.</li>
+              </ol>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-4)', flexWrap: 'wrap' }}>
+                <button className="btn btn-primary" onClick={() => setShowSubjectsModal(true)}>
+                  <Sparkles size={16} /> Generate subjects 
+               </button>
+                <span className="text-muted" style={{ fontSize: 'var(--text-sm)' }}>or add your first subject below</span>
+              </div>
+            </div>
           )}
 
           <div style={{ padding: 'var(--space-3) var(--space-4)' }}>
+
+            {tree.some((n) => n.children.length === 0 && !n.isActionable) && (
+              <p className="text-muted" style={{ fontSize: 'var(--text-sm)', padding: '0 var(--space-4) var(--space-2)' }}>
+                Open a subject and choose “Generate roadmap for this subject” to plan its chapters and topics.
+              </p>
+            )}
+
             <RoadmapTree
               nodes={tree}
               onAddChild={handleAddChild}
@@ -218,6 +290,7 @@ function GoalDetail() {
               onDelete={handleDeleteNode}
               onSelect={handleSelectNode}
               selectedNodeId={selectedNodeId}
+              onGenerateSubject={setSubjectForModal}
             />
           </div>
 
@@ -243,6 +316,17 @@ function GoalDetail() {
                   <p className="text-muted" style={{ fontSize: 'var(--text-sm)' }}>
                     Estimated: {selectedNode.estimatedMinutes ?? '—'}m · Spent: {selectedNode.actualMinutesSpent}m
                   </p>
+                     <button
+                      type="button"
+                      className="btn btn-primary"
+                      style={{ margin: 'var(--space-3) 0', width: '100%' }}
+                      onClick={() => {
+                        markSessionHandoff(selectedNode._id);
+                        navigate(`/prephub/${selectedNode._id}`);
+                      }}
+                     >
+                      <BookOpen size={16} /> Open PrepHub
+                    </button>
                   <SessionTimer nodeId={selectedNode._id} onSessionLogged={loadAll} />
                 </>
               )}
@@ -271,11 +355,40 @@ function GoalDetail() {
         </div>
       )}
 
+
+
+      {showRoadmapWizard && (
+        <GoalRoadmapWizard
+          goalId={goalId}
+          goalTitle={goal.title}
+          onClose={() => setShowRoadmapWizard(false)}
+          onSaved={handleRoadmapSaved}
+        />
+      )}
+
       {showSyllabusModal && (
         <SyllabusPreviewModal
           goalId={goalId}
           onClose={() => setShowSyllabusModal(false)}
           onSaved={handleSyllabusSaved}
+        />
+      )}
+
+      {subjectForModal && (
+        <SyllabusPreviewModal
+          goalId={goalId}
+          subjectNode={subjectForModal}
+          onClose={() => setSubjectForModal(null)}
+          onSaved={handleSubjectRoadmapSaved}
+        />
+      )}
+
+      {showSubjectsModal && (
+        <GoalSubjectsModal
+          goalId={goalId}
+          goalTitle={goal.title}
+          onClose={() => setShowSubjectsModal(false)}
+          onSaved={handleSubjectsSaved}
         />
       )}
 

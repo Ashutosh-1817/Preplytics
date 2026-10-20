@@ -6,7 +6,9 @@ import api from './api.js';
 export const startSession = (nodeId, { force = false } = {}) =>
   api.post('/sessions/start', { nodeId, force }).then((r) => r.data.data.session);
 
-export const stopSession = (sessionId) => api.post('/sessions/stop', { sessionId }).then((r) => r.data.data);
+export const stopSession = (sessionId, { endedAt } = {}) =>
+  api.post('/sessions/stop', { sessionId, ...(endedAt ? { endedAt } : {}) }).then((r) => r.data.data);
+
 export const logManualSession = (payload) => api.post('/sessions/manual', payload).then((r) => r.data.data.session);
 
 // Finished sessions only. It can never return a timer that is still running.

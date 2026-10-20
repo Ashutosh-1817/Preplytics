@@ -134,11 +134,13 @@ const isRetryable = (err) =>
   err.statusCode >= 500;
 
 export const generateCompletion = async (messages, options = {}) => {
-  const attempts = [
+  const openrouterTiers = [
     { label: 'OpenRouter primary', fn: () => callOpenRouter(config.ai.openrouterPrimaryModel, messages, options) },
     { label: 'OpenRouter fallback', fn: () => callOpenRouter(config.ai.openrouterFallbackModel, messages, options) },
-    { label: 'Gemini', fn: () => callGemini(messages, options) },
   ];
+  const geminiTier = { label: 'Gemini', fn: () => callGemini(messages, options) };
+
+  const attempts = config.ai.primary === 'gemini' ? [geminiTier, ...openrouterTiers] : [...openrouterTiers, geminiTier];
 
   let lastErr;
 

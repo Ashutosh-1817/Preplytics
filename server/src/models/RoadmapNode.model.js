@@ -59,6 +59,10 @@ const roadmapNodeSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
+    completedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
@@ -68,6 +72,12 @@ roadmapNodeSchema.index({ goalId: 1, parentId: 1 });
 
 // Fast status rollups (progress dashboard, "what's left" queries)
 roadmapNodeSchema.index({ goalId: 1, status: 1 });
+
+roadmapNodeSchema.pre('save', async function () {
+  if (this.isModified('status')) {
+    this.completedAt = this.status === 'completed' ? new Date() : null;
+  }
+});
 
 // ---------- Statics: tree-aware operations that belong with the model ----------
 

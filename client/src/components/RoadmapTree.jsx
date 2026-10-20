@@ -1,7 +1,5 @@
-// src/components/RoadmapTree.jsx
-// FULL FILE — replace everything currently in this file with this.
-
 import { useState } from 'react';
+import { Sparkles } from 'lucide-react';
 import './RoadmapTree.css';
 
 const STATUS_CLASS = {
@@ -11,7 +9,7 @@ const STATUS_CLASS = {
   not_started: '',
 };
 
-function RoadmapTree({ nodes, onAddChild, onToggleComplete, onSelect, selectedNodeId, onDelete }) {
+function RoadmapTree({ nodes, onAddChild, onToggleComplete, onSelect, selectedNodeId, onDelete, onGenerateSubject }) {
   return (
     <ul className="roadmap-tree">
       {nodes.map((node) => (
@@ -23,17 +21,22 @@ function RoadmapTree({ nodes, onAddChild, onToggleComplete, onSelect, selectedNo
           onSelect={onSelect}
           selectedNodeId={selectedNodeId}
           onDelete={onDelete}
+          onGenerateSubject={onGenerateSubject}
         />
       ))}
     </ul>
   );
 }
 
-function TreeNode({ node, onAddChild, onToggleComplete, onSelect, selectedNodeId, onDelete }) {
-  const [expanded, setExpanded] = useState(true);
+function TreeNode({ node, onAddChild, onToggleComplete, onSelect, selectedNodeId, onDelete, onGenerateSubject }) {
+  const hasChildren = node.children.length > 0;
+  // Only top-level subjects with nothing under them offer AI generation
+  const isEmptySubject = node.level === 1 && !hasChildren;
+
+  const [expanded, setExpanded] = useState(!isEmptySubject);
   const [showAddInput, setShowAddInput] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const hasChildren = node.children.length > 0;
+
 
   const handleAddSubmit = (e) => {
     e.preventDefault();
@@ -52,12 +55,14 @@ function TreeNode({ node, onAddChild, onToggleComplete, onSelect, selectedNodeId
     if (confirm(warning)) onDelete(node._id);
   };
 
+  
+
   const addLabel = node.level === 1 ? '+ chapter' : node.level === 2 ? '+ subtopic' : '+ add';
 
   return (
     <li className={`tree-node tree-node-level-${node.level}`}>
       <div className={`tree-node-row tree-node-row-level-${node.level} ${selectedNodeId === node._id ? 'tree-node-selected' : ''}`}>
-        {hasChildren ? (
+        {hasChildren || isEmptySubject ? (
           <button type="button" className="tree-toggle" onClick={() => setExpanded((e) => !e)}>
             {expanded ? '▾' : '▸'}
           </button>
@@ -80,6 +85,8 @@ function TreeNode({ node, onAddChild, onToggleComplete, onSelect, selectedNodeId
           {node.title}
         </span>
 
+        {isEmptySubject && !node.isActionable && <span className="tree-unplanned">not planned yet</span>}
+
         {node.isActionable && node.status !== 'not_started' && (
           <span className={`tree-node-status ${STATUS_CLASS[node.status]}`}>
             {node.status.replace('_', ' ')}
@@ -94,6 +101,14 @@ function TreeNode({ node, onAddChild, onToggleComplete, onSelect, selectedNodeId
 
         <button type="button" className="tree-delete-btn" onClick={handleDeleteClick} title="Delete">🗑</button>
       </div>
+
+      {isEmptySubject && expanded && (
+        <div className="tree-generate">
+          <button type="button" className="tree-generate-btn" onClick={() => onGenerateSubject(node)}>
+            <Sparkles size={13} /> Generate roadmap for this subject
+          </button>
+        </div>
+      )}
 
       {showAddInput && (
         <form className="tree-add-form" onSubmit={handleAddSubmit}>
@@ -115,6 +130,7 @@ function TreeNode({ node, onAddChild, onToggleComplete, onSelect, selectedNodeId
           onSelect={onSelect}
           selectedNodeId={selectedNodeId}
           onDelete={onDelete}
+          onGenerateSubject={onGenerateSubject}
         />
       )}
     </li>

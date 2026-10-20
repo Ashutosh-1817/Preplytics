@@ -41,26 +41,42 @@ export const askAi = asyncHandler(async (req, res) => {
   const completionOptions = contextInfo?.scope === 'whole' ? { timeoutMs: LONG_CONTEXT_TIMEOUT_MS } : {};
 
   // ---------- Stateless quick actions ----------
+    // ---------- Quick actions (now saved to chat history too) ----------
   if (action !== 'chat') {
     const messages = [
       { role: 'system', content: systemPrompt },
-      // A quick action can still carry an optional user instruction
-      // (e.g. "focus on the second paragraph"), defaulting to a generic
-      // trigger phrase if the user didn't type anything
       { role: 'user', content: message || `Please ${action.replace('_', ' ')} the above.` },
     ];
 
     const result = await generateCompletion(messages, completionOptions);
 
-    // Shaped specifically so the frontend's "Save as Note" button has
-    // everything it needs without a second round trip
+    const label = action.replace('_', ' ');
+    const userText = message ? `${label}: ${message}` : `Please ${label} this.`;
+
+    let conversation = null;
+    if (conversationId) {
+      conversation = await Conversation.findOne({ _id: conversationId, owner: req.user._id });
+    }
+    if (!conversation) {
+      conversation = await Conversation.create({
+        owner: req.user._id,
+        contextType,
+        contextId,
+        title: userText.slice(0, 60),
+      });
+    }
+    conversation.messages.push({ role: 'user', content: userText });
+    conversation.messages.push({ role: 'assistant', content: result });
+    await conversation.save();
+
     return res.status(200).json(
       new ApiResponse(
         200,
         {
           result,
           action,
-          suggestedTitle: `${action.replace('_', ' ')} — ${new Date().toLocaleDateString()}`,
+          conversationId: conversation._id,
+          suggestedTitle: `${label} — ${new Date().toLocaleDateString()}`,
           goalId,
           nodeId,
           contextInfo,
@@ -149,4 +165,30 @@ export const getConversationById = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json(new ApiResponse(200, { conversation }, 'Conversation fetched successfully'));
+});
+
+// ---------- DELETE /ai/conversations/:conversationId ----------
+
+export const deleteConversation = asyncHandler(async (req, res) => {
+  // owner in the filter: other users' conversations simply look like "not found"
+  const result = await Conversation.deleteOne({
+    _id: req.params.conversationId,
+    owner: req.user._id,
+  });
+
+  if (result.deletedCount === 0) {
+    throw new ApiError(404, ErrorCodes.NOT_FOUND, 'Conversation not found');
+  }
+
+  res.status(200).json(new ApiResponse(200, null, 'Conversation deleted'));
+});
+
+// ---------- DELETE /ai/conversations ----------
+
+export const deleteAllConversations = asyncHandler(async (req, res) => {
+  const result = await Conversation.deleteMany({ owner: req.user._id });
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, { deleted: result.deletedCount }, 'All conversations deleted'));
 });

@@ -1,5 +1,3 @@
-
-
 import { Routes, Route } from 'react-router-dom';
 import AppShell from '../layouts/AppShell.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
@@ -12,12 +10,31 @@ import CalendarPage from '../pages/Calendar.jsx';
 import Login from '../pages/Login.jsx';
 import Signup from '../pages/Signup.jsx';
 import Research from '../pages/Research.jsx';
+import Analytics from '../pages/Analytics.jsx';
+import Wrapped from '../pages/Wrapped.jsx';
+import PrepHubFrame from '../components/prephub/PrepHubFrame.jsx';
+import { lazy, Suspense } from 'react'; 
+const PrepHub = lazy(() => import('../pages/PrepHub.jsx'));
 
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+
+      {/* Standalone Full-Screen PrepHub Arena */}
+      <Route
+        path="/prephub/:nodeId"
+        element={
+          <ProtectedRoute>
+            <PrepHubFrame>
+              <Suspense fallback={<div className="skeleton" style={{ height: '100%' }} />}>
+                <PrepHub />
+              </Suspense>
+            </PrepHubFrame>
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         element={
@@ -33,6 +50,8 @@ function AppRoutes() {
         <Route path="/files" element={<Files />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/research" element={<Research />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/wrapped" element={<Wrapped />} />
       </Route>
     </Routes>
   );

@@ -73,6 +73,7 @@ const config = Object.freeze({
     geminiApiKey: process.env.GEMINI_API_KEY,
     geminiModel: process.env.GEMINI_MODEL,
     dailyLimit: Number(process.env.AI_DAILY_LIMIT),
+    primary: process.env.AI_PRIMARY || 'openrouter',
   }),
   reminderTimezone: process.env.REMINDER_TIMEZONE || 'Asia/Kolkata',
   search: Object.freeze({

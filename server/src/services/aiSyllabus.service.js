@@ -2,7 +2,12 @@
 // FULL FILE: replace everything currently in this file with this.
 
 import { generateCompletion } from './aiProvider.service.js';
-import { chapterListSchema, topicListSchema } from '../validators/aiSyllabus.validator.js';
+import {
+  chapterListSchema,
+  topicListSchema,
+  subjectListSchema,
+  subjectBreakdownSchema,
+} from '../validators/aiSyllabus.validator.js';
 import ApiError from '../utils/ApiError.js';
 import ErrorCodes from '../utils/errorCodes.js';
 
@@ -13,13 +18,13 @@ const extractJson = (raw) => {
 
 // Returns validated data, or null when the provider answered but the
 // content was unusable. Provider outages throw from generateCompletion.
-const requestJson = async ({ system, user, maxTokens, schema }) => {
+const requestJson = async ({ system, user, maxTokens, schema, timeoutMs }) => {
   const raw = await generateCompletion(
     [
       { role: 'system', content: system },
       { role: 'user', content: user },
     ],
-        { temperature: 0.3, maxTokens, json: true }
+    { temperature: 0.3, maxTokens, json: true, ...(timeoutMs && { timeoutMs }) }
   );
 
   let parsed;
@@ -34,7 +39,7 @@ const requestJson = async ({ system, user, maxTokens, schema }) => {
 };
 
 // One retry, only for unusable content. Safe now that each call is small.
-const requestJsonWithRetry = async (args) => (await requestJson(args)) ?? (await requestJson(args));
+export const requestJsonWithRetry = async (args) => (await requestJson(args)) ?? (await requestJson(args));
 
 const learnerContextLine = (context) =>
   context ? `\nAdditional context from the learner: ${context}` : '';
@@ -110,6 +115,83 @@ Rules:
       502,
       ErrorCodes.INTERNAL_SERVER_ERROR,
       'Could not generate topics for this chapter. Please retry.'
+    );
+  }
+
+  return result;
+};
+
+// ---------- Goal-level, step 1: core subjects ----------
+
+export const generateSubjectList = async (goalTitle, goalDescription, context) => {
+  const system = `You are a curriculum planner. A learner is starting this preparation goal.
+
+Goal: "${goalTitle}"${goalDescription ? `\nGoal description: ${goalDescription}` : ''}${learnerContextLine(context)}
+
+List the core subjects that must be covered to prepare for this goal, in a sensible study order, weighted by what actually matters for it.
+
+Respond with ONLY valid JSON, no markdown fences, no explanation, in exactly this shape:
+{ "subjects": [ { "title": "Subject name" } ] }
+
+Rules:
+- 3 to 8 subjects: fewer for a narrow goal, more for a broad exam
+- Titles only, short (under 6 words), no numbering, no descriptions
+- Foundational subjects first
+- Do not include anything outside the JSON object`;
+
+  const result = await requestJsonWithRetry({
+    system,
+    user: `List the core subjects for the goal "${goalTitle}".`,
+    maxTokens: 1000,
+    schema: subjectListSchema,
+  });
+
+  if (!result) {
+    throw new ApiError(
+      502,
+      ErrorCodes.INTERNAL_SERVER_ERROR,
+      'Could not generate the subject list. Please try again or build your roadmap manually.'
+    );
+  }
+
+  return result;
+};
+
+// ---------- Goal-level, step 2: chapters and topics for ONE subject ----------
+
+export const generateSubjectBreakdown = async (goalTitle, subject, siblingSubjects, context) => {
+  const others = siblingSubjects.filter((t) => t !== subject);
+
+  const system = `You are a curriculum planner breaking one subject into chapters and study topics.
+
+Preparation goal: "${goalTitle}"
+Subject to break down: "${subject}"${
+    others.length ? `\nOther subjects in this syllabus (do not duplicate their content): ${others.join('; ')}` : ''
+  }${learnerContextLine(context)}
+
+Respond with ONLY valid JSON, no markdown fences, no explanation, in exactly this shape:
+{ "chapters": [ { "title": "Chapter name", "subtopics": [ { "title": "Topic name", "estimatedMinutes": 60 } ] } ] }
+
+Rules:
+- 3 to 7 chapters in a sensible learning order
+- 3 to 6 subtopics per chapter
+- Depth and emphasis appropriate for "${goalTitle}"
+- estimatedMinutes must be a realistic study time per topic (typically 30-180)
+- Do not include anything outside the JSON object`;
+
+  const result = await requestJsonWithRetry({
+    system,
+    user: `Break down "${subject}" for the goal "${goalTitle}".`,
+    maxTokens: 3000,
+    timeoutMs: 40_000,
+    schema: subjectBreakdownSchema,
+  });
+
+  if (!result) {
+    throw new ApiError(
+      502,
+      ErrorCodes.INTERNAL_SERVER_ERROR,
+      'Could not generate topics for this subject. Please retry.'
     );
   }
 

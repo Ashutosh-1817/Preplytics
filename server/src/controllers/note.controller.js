@@ -77,6 +77,19 @@ export const getNoteById = asyncHandler(async (req, res) => {
 export const updateNote = asyncHandler(async (req, res) => {
   const note = await getOwnedNoteOrFail(req.params.noteId, req.user._id);
 
+  if (req.body.baseUpdatedAt) {
+    const base = new Date(req.body.baseUpdatedAt).getTime();
+    if (note.updatedAt.getTime() > base) {
+      throw new ApiError(
+        409,
+        ErrorCodes.NOTE_CONFLICT,
+        'This note was changed somewhere else since you opened it.',
+        { updatedAt: note.updatedAt }
+      );
+    }
+  }
+
+
   // Re-linking to a different node re-derives goalId the same way
   // creation does — never trust a client-sent goalId alongside nodeId
   if (req.body.nodeId !== undefined) {
@@ -96,6 +109,7 @@ export const updateNote = asyncHandler(async (req, res) => {
   }
 
   const { nodeId, ...rest } = req.body;
+  delete rest.baseUpdatedAt;
   Object.assign(note, rest);
 
   await note.save();

@@ -7,6 +7,8 @@ import {
   saveAiResultAsNote,
   getConversations,
   getConversationById,
+  deleteConversation,
+  deleteAllConversations,
 } from '../controllers/ai.controller.js';
 
 const router = Router();
@@ -17,5 +19,7 @@ router.post('/ask', validate(askAiSchema), askAi);
 router.post('/save-as-note', validate(saveAsNoteSchema), saveAiResultAsNote);
 router.get('/conversations', getConversations);
 router.get('/conversations/:conversationId', getConversationById);
+router.delete('/conversations/:conversationId', deleteConversation);
+router.delete('/conversations', deleteAllConversations);
 
 export default router;

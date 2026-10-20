@@ -64,6 +64,12 @@ const goalSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    overview: {
+      status: { type: String, enum: ['none', 'ready'], default: 'none' },
+      data: { type: mongoose.Schema.Types.Mixed, default: null },
+      generatedAt: { type: Date, default: null },
+    },
   },
   { timestamps: true }
 );

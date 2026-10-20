@@ -50,6 +50,8 @@ sessionSchema.index({ owner: 1, goalId: 1 });
 sessionSchema.index({ nodeId: 1 });
 // For "is there an active timer running right now" checks
 sessionSchema.index({ owner: 1, endedAt: 1 });
+sessionSchema.index({ owner: 1, startedAt: -1 });
+
 
 const Session = mongoose.model('Session', sessionSchema);
 

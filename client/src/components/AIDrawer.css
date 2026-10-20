@@ -814,3 +814,26 @@
   line-height: 1.4;
   color: var(--ink-muted, #64748b);
 }
+
+
+/* ---------- History: delete ---------- */
+
+.ai-history-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3, 12px); }
+.ai-history-clear { background: none; border: 0; cursor: pointer; font-size: var(--text-xs, 0.75rem); color: var(--ink-muted, #64748b); padding: 4px 10px; border-radius: 999px; }
+.ai-history-clear:hover { color: var(--alert, #ef4444); background: color-mix(in srgb, var(--alert, #ef4444) 10%, transparent); }
+.ai-history-clear:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.ai-history-row { display: flex; align-items: center; gap: 4px; }
+.ai-history-row .ai-history-item { flex: 1; width: auto; min-width: 0; }
+
+.ai-history-delete { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: none; border: 0; border-radius: var(--radius-md, 10px); color: var(--ink-muted, #64748b); cursor: pointer; opacity: 0.55; transition: opacity 0.15s, background 0.15s, color 0.15s; }
+.ai-history-row:hover .ai-history-delete, .ai-history-delete:focus-visible { opacity: 1; }
+.ai-history-delete:hover { color: var(--alert, #ef4444); background: color-mix(in srgb, var(--alert, #ef4444) 10%, transparent); }
+.ai-history-delete:disabled { opacity: 0.25; cursor: not-allowed; }
+
+.ai-history-confirm { display: flex; align-items: center; gap: var(--space-2, 8px); flex-wrap: wrap; width: 100%; padding: 8px 14px; margin-bottom: 4px; border-radius: var(--radius-md, 10px); background: color-mix(in srgb, var(--alert, #ef4444) 8%, transparent); font-size: var(--text-sm, 0.875rem); color: var(--ink, #0f172a); }
+.ai-history-confirm span { flex: 1; min-width: 140px; }
+.ai-history-confirm-yes, .ai-history-confirm-no { padding: 4px 12px; border-radius: 999px; font-size: var(--text-xs, 0.75rem); cursor: pointer; border: 1px solid transparent; }
+.ai-history-confirm-yes { background: var(--alert, #ef4444); color: #fff; }
+.ai-history-confirm-no { background: transparent; color: var(--ink-muted, #64748b); border-color: var(--border-subtle, rgba(226, 232, 240, 0.8)); }
+.ai-history-confirm-yes:disabled, .ai-history-confirm-no:disabled { opacity: 0.5; cursor: not-allowed; }

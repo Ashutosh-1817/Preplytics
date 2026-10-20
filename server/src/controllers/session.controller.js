@@ -47,8 +47,19 @@ const getOwnedNodeOrFail = async (nodeId, userId) => {
 
 // Closes a running timer session. Used by "Stop" and by "close the old one
 // and start this one", so both behave identically.
-const finalizeSession = async (session) => {
-  const endedAt = new Date();
+const finalizeSession = async (session, requestedEndedAt = null) => {
+  const now = new Date();
+  let endedAt = now;
+
+  // An idle timer is trimmed to the user's last activity. The end can never be
+  // in the future or before the session started.
+  if (requestedEndedAt) {
+    const requested = new Date(requestedEndedAt);
+    if (!Number.isNaN(requested.getTime()) && requested < now) {
+      endedAt = requested < session.startedAt ? session.startedAt : requested;
+    }
+  }
+
   const rawSeconds = Math.floor((endedAt - session.startedAt) / 1000);
 
   // Too short to be real study time — discard the session entirely
@@ -168,7 +179,7 @@ export const stopSession = asyncHandler(async (req, res) => {
     throw new ApiError(400, ErrorCodes.VALIDATION_ERROR, 'Session already stopped');
   }
 
-  const result = await finalizeSession(session);
+  const result = await finalizeSession(session, req.body.endedAt);
 
   if (result.discarded) {
     return res

@@ -7,17 +7,13 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import Placeholder from '@tiptap/extension-placeholder';
 import './NoteEditor.css';
+import { createNoteExtensions } from './editor/noteExtensions.js';
 
 const TEXT_COLORS = ['#1E293B', '#6C5CE7', '#00CEC9', '#FF7675', '#F59E0B', '#10B981'];
 
 function NoteEditor({ content, onChange }) {
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      TextStyle,
-      Color,
-      Placeholder.configure({ placeholder: 'Start writing…' }),
-    ],
+    extensions: createNoteExtensions('Start writing…'),
     content: content || '',
     onUpdate: ({ editor }) => {
       onChange({

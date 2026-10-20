@@ -5,7 +5,7 @@ import {
   Sparkles, ChevronUp, ChevronDown, Trash2, X, Plus, RefreshCw, Loader2,
   AlertCircle, AlertTriangle, CheckCircle2, Ban,
 } from 'lucide-react';
-import { generateChapters, expandChapter, bulkInsertSyllabus, fetchCapacity } from '../services/aiSyllabus.api.js';
+import { generateChapters, expandChapter, bulkInsertSyllabus, saveSubjectRoadmap, fetchCapacity } from '../services/aiSyllabus.api.js';
 import { formatDuration } from '../utils/formatDuration.js';
 import './SyllabusPreviewModal.css';
 
@@ -22,9 +22,9 @@ const errorMessage = (err, fallback) => {
   return err.response?.data?.error?.message || fallback;
 };
 
-function SyllabusPreviewModal({ goalId, onClose, onSaved }) {
+function SyllabusPreviewModal({ goalId, subjectNode = null, onClose, onSaved }) {
   const [stage, setStage] = useState(STAGE.INPUT);
-  const [subject, setSubject] = useState('');
+  const [subject, setSubject] = useState(subjectNode?.title ?? '');
   const [context, setContext] = useState('');
   const [chapters, setChapters] = useState([]); // { uid, title, subtopics: [{ title, estimatedMinutes, included }], status, error }
   const [error, setError] = useState('');
@@ -43,7 +43,12 @@ function SyllabusPreviewModal({ goalId, onClose, onSaved }) {
   useEffect(() => {
     fetchCapacity(goalId)
       .then((data) => {
-        if (aliveRef.current) setCapacity(data);
+                if (!aliveRef.current) return;
+                  const selfMinutes =
+                    subjectNode && subjectNode.isActionable && subjectNode.status !== 'completed'
+                    ? subjectNode.estimatedMinutes || 30
+                    : 0;
+                  setCapacity({ ...data, existingRemainingMinutes: Math.max(0, data.existingRemainingMinutes - selfMinutes) });
       })
       .catch(() => {
         // Non-blocking: the backend still enforces the limit on save
@@ -165,7 +170,7 @@ function SyllabusPreviewModal({ goalId, onClose, onSaved }) {
   };
 
   const handleGenerate = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     setError('');
     setStage(STAGE.LOADING);
     const runId = ++runIdRef.current;
@@ -182,6 +187,7 @@ function SyllabusPreviewModal({ goalId, onClose, onSaved }) {
         error: '',
       }));
 
+
       setChapters(list);
       setStage(STAGE.PREVIEW);
       expandAll(list, runId);
@@ -191,6 +197,7 @@ function SyllabusPreviewModal({ goalId, onClose, onSaved }) {
       setStage(STAGE.INPUT);
     }
   };
+
 
   const handleRetryChapter = (chapter) => {
     expandOne(chapter.uid, chapter.title, chapters.map((c) => c.title), runIdRef.current);
@@ -212,7 +219,9 @@ function SyllabusPreviewModal({ goalId, onClose, onSaved }) {
           estimatedMinutes: Number(s.estimatedMinutes),
         })),
       }));
-      const result = await bulkInsertSyllabus(goalId, subject.trim(), payload);
+        const result = subjectNode
+        ? await saveSubjectRoadmap(goalId, subjectNode._id, payload)
+        : await bulkInsertSyllabus(goalId, subject.trim(), payload);
       onSaved(result);
     } catch (err) {
       setError(errorMessage(err, 'Could not save the syllabus.'));
@@ -321,6 +330,7 @@ function SyllabusPreviewModal({ goalId, onClose, onSaved }) {
                 placeholder="e.g. Computer Networks"
                 required
                 autoFocus
+                readOnly={Boolean(subjectNode)}
               />
             </label>
 

@@ -10,6 +10,7 @@ import {
   resetNodeSessions,
 } from '../services/sessions.api.js';
 import { readActiveSession, writeActiveSession, clearActiveSession } from '../utils/activeSessionStorage.js';
+import { consumeSessionHandoff } from '../utils/sessionHandoff.js';
 import SessionConflictDialog from './SessionConflictDialog.jsx';
 import './SessionTimer.css';
 
@@ -77,6 +78,7 @@ function SessionTimer({ nodeId, onSessionLogged }) {
     return () => {
       const running = activeSessionRef.current;
       if (running) {
+        if (consumeSessionHandoff(nodeId)) return;
         clearActiveSession();
         stoppingSessionIds.add(running._id);
         stopSession(running._id)

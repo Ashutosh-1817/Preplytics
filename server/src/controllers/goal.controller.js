@@ -44,7 +44,7 @@ export const getGoals = asyncHandler(async (req, res) => {
   const filter = { owner: req.user._id };
   if (status) filter.status = status;
 
-  const goals = await Goal.find(filter).sort({ createdAt: -1 });
+  const goals = await Goal.find(filter).select('-overview').sort({ createdAt: -1 });
 
   res.status(200).json(new ApiResponse(200, { goals }, 'Goals fetched successfully'));
 });
@@ -62,7 +62,15 @@ export const getGoalById = asyncHandler(async (req, res) => {
 export const updateGoal = asyncHandler(async (req, res) => {
   const goal = await getOwnedGoalOrFail(req.params.goalId, req.user._id);
 
+  const titleChanged = req.body.title !== undefined && req.body.title !== goal.title;
+
   Object.assign(goal, req.body);
+
+  // A briefing written for the old title would now be wrong
+  if (titleChanged) {
+    goal.overview = { status: 'none', data: null, generatedAt: null };
+  }
+
   await goal.save();
 
   res.status(200).json(new ApiResponse(200, { goal }, 'Goal updated successfully'));

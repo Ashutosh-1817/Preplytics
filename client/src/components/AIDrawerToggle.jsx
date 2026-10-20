@@ -8,7 +8,7 @@ function AIDrawerToggle() {
   if (isOpen) return null;
 
   return (
-    <button className="ai-drawer-toggle" onClick={toggleDrawer} title="Ask AI" aria-label="Open AI assistant">
+    <button className="ai-drawer-toggle" onClick={toggleDrawer} title="PrepBot" aria-label="Open AI assistant">
       <Sparkles size={24} />
     </button>
   );

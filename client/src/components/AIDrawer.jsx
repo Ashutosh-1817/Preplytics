@@ -9,10 +9,13 @@ import 'katex/dist/katex.min.css';
 import {
   Sparkles, History, MessageSquarePlus, Minus, Maximize2, Minimize2, X, ArrowUp,
   AlignLeft, Lightbulb, FilePlus2, ListChecks, FileText, StickyNote, BookOpen, Copy, Check,
-  ChevronLeft, MessageSquare, Paperclip,
+  ChevronLeft, MessageSquare, Paperclip,Trash2,
 } from 'lucide-react';
 import { useAIDrawer } from '../context/AIDrawerContext.jsx';
-import { askAi, saveAiResultAsNote, fetchConversations, fetchConversationById } from '../services/ai.api.js';
+import {
+  askAi, saveAiResultAsNote, fetchConversations, fetchConversationById,
+  deleteConversation, deleteAllConversations,
+} from '../services/ai.api.js';
 import { textToTiptapDoc } from '../utils/textToTiptapDoc.js';
 import AttachFilePopover from './files/AttachFilePopover.jsx';
 import './AIDrawer.css';
@@ -45,6 +48,9 @@ function AIDrawer() {
   const [error, setError] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // a conversation id, or 'all'
+  const [deleting, setDeleting] = useState(false);
+  const [historyError, setHistoryError] = useState('');
   const [copiedIdx, setCopiedIdx] = useState(null);
   const [showAttach, setShowAttach] = useState(false);
   const scrollRef = useRef(null);
@@ -85,10 +91,10 @@ function AIDrawer() {
         contextPage: isFile && scope === 'page' ? context.page : null,
         contextScope: isFile ? scope : null,
         message: message || '',
-        conversationId: action === 'chat' ? conversationId : null,
+        conversationId,
       });
 
-      if (action === 'chat' && result.conversationId) setConversationId(result.conversationId);
+      if (result.conversationId) setConversationId(result.conversationId);
 
       let suggestedTitle;
       if (action === 'chat') {
@@ -175,6 +181,8 @@ function AIDrawer() {
     }
     setShowHistory(true);
     setHistory(null);
+    setConfirmDelete(null);
+    setHistoryError('');
     try {
       setHistory(await fetchConversations());
     } catch {
@@ -193,6 +201,46 @@ function AIDrawer() {
     }
   };
 
+    const handleDeleteConversation = async (id) => {
+    setDeleting(true);
+    setHistoryError('');
+    try {
+      await deleteConversation(id);
+    } catch (err) {
+      // 404 = already gone (deleted from another tab). Treat as success.
+      if (err.response?.status !== 404) {
+        setHistoryError(err.response?.data?.error?.message || 'Could not delete that chat. Please try again.');
+        setDeleting(false);
+        return;
+      }
+    }
+    setHistory((prev) => (prev ? prev.filter((c) => c._id !== id) : prev));
+    // If the chat on screen was the one deleted, start fresh so the next
+    // message doesn't point at a conversation that no longer exists
+    if (id === conversationId) {
+      setConversationId(null);
+      setMessages([]);
+    }
+    setConfirmDelete(null);
+    setDeleting(false);
+  };
+
+  const handleClearAll = async () => {
+    setDeleting(true);
+    setHistoryError('');
+    try {
+      await deleteAllConversations();
+      setHistory([]);
+      setConversationId(null);
+      setMessages([]);
+      setConfirmDelete(null);
+    } catch (err) {
+      setHistoryError(err.response?.data?.error?.message || 'Could not clear your chats. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleAttachSelect = (file) => {
     setDrawerContext('file', file._id, `File: ${file.fileName}`, null);
     setShowAttach(false);
@@ -203,7 +251,7 @@ function AIDrawer() {
   if (viewMode === 'minimized') {
     return (
       <button className="ai-drawer-minimized" onClick={() => setViewMode('docked')}>
-        <Sparkles size={16} /> Ask AI
+        <Sparkles size={16} /> PrepBot
         {messages.length > 0 && <span className="ai-minimized-badge">{messages.length}</span>}
       </button>
     );
@@ -226,7 +274,7 @@ function AIDrawer() {
         <div className="ai-brand">
           <div className="ai-brand-badge"><Sparkles size={18} /></div>
           <div className="ai-brand-text">
-            <span className="ai-brand-title">Ask AI</span>
+            <span className="ai-brand-title">PrepBot</span>
             {context.type !== 'none' ? (
              <span className="ai-context-row">
                 <span className="ai-context-chip">
@@ -283,21 +331,67 @@ function AIDrawer() {
           <button className="ai-history-back" onClick={() => setShowHistory(false)}>
             <ChevronLeft size={16} /> Back to chat
           </button>
-          <h4 className="ai-history-heading">Past conversations</h4>
+          <div className="ai-history-head">
+            <h4 className="ai-history-heading">Past conversations</h4>
+            {history?.length > 0 && confirmDelete !== 'all' && (
+              <button className="ai-history-clear" onClick={() => setConfirmDelete('all')} disabled={deleting}>
+                Clear all
+              </button>
+            )}
+          </div>
+
+          {confirmDelete === 'all' && (
+            <div className="ai-history-confirm">
+              <span>Delete all {history?.length} chats? This can't be undone.</span>
+              <button className="ai-history-confirm-yes" onClick={handleClearAll} disabled={deleting}>
+                {deleting ? 'Deleting…' : 'Delete all'}
+              </button>
+              <button className="ai-history-confirm-no" onClick={() => setConfirmDelete(null)} disabled={deleting}>
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {historyError && <p className="auth-error">{historyError}</p>}
 
           {history === null && <div className="skeleton" style={{ height: 52, marginBottom: 8 }} />}
           {history?.length === 0 && <p className="text-muted ai-empty-text">No past conversations yet.</p>}
 
           {history?.map((c) => (
-            <button key={c._id} className="ai-history-item" onClick={() => handleLoadConversation(c._id)}>
-              <MessageSquare size={16} className="ai-history-icon" />
-              <span className="ai-history-meta">
-                <span className="ai-history-title">{c.title}</span>
-                <span className="text-muted" style={{ fontSize: 'var(--text-xs)' }}>
-                  {new Date(c.updatedAt).toLocaleDateString()}
-                </span>
-              </span>
-            </button>
+            <div key={c._id} className="ai-history-row">
+              {confirmDelete === c._id ? (
+                <div className="ai-history-confirm">
+                  <span>Delete this chat?</span>
+                  <button className="ai-history-confirm-yes" onClick={() => handleDeleteConversation(c._id)} disabled={deleting}>
+                    {deleting ? 'Deleting…' : 'Delete'}
+                  </button>
+                  <button className="ai-history-confirm-no" onClick={() => setConfirmDelete(null)} disabled={deleting}>
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button className="ai-history-item" onClick={() => handleLoadConversation(c._id)}>
+                    <MessageSquare size={16} className="ai-history-icon" />
+                    <span className="ai-history-meta">
+                      <span className="ai-history-title">{c.title}</span>
+                      <span className="text-muted" style={{ fontSize: 'var(--text-xs)' }}>
+                        {new Date(c.updatedAt).toLocaleDateString()}
+                      </span>
+                    </span>
+                  </button>
+                  <button
+                    className="ai-history-delete"
+                    title="Delete chat"
+                    aria-label={`Delete chat ${c.title}`}
+                    onClick={() => setConfirmDelete(c._id)}
+                    disabled={deleting || (isLoading && c._id === conversationId)}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </>
+              )}
+            </div>
           ))}
         </div>
       ) : (

@@ -13,6 +13,12 @@ export const startSessionSchema = z.object({
 
 export const stopSessionSchema = z.object({
   sessionId: objectIdSchema,
+  // Optional: stop the timer "as of" this moment (used by the idle check to
+  // trim away the time nobody was studying). Clamped on the server.
+  endedAt: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), { message: 'endedAt must be a valid date' })
+    .optional(),
 });
 
 export const manualSessionSchema = z.object({

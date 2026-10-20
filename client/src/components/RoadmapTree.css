@@ -143,3 +143,20 @@
   font-size: var(--text-sm);
   border-radius: var(--radius-pill);
 }
+
+
+.tree-generate { margin: 4px 0 6px 2.4rem; }
+.tree-generate-btn { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; font-size: var(--text-xs); color: var(--signal); background: color-mix(in srgb, var(--signal) 8%, transparent); border: 1px dashed color-mix(in srgb, var(--signal) 45%, transparent); border-radius: var(--radius-pill); cursor: pointer; }
+.tree-generate-btn:hover { background: color-mix(in srgb, var(--signal) 16%, transparent); }
+.tree-generate-busy { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--ink-muted); }
+.tree-generate-spin { animation: tree-generate-rotate 1s linear infinite; }
+.tree-generate-error { margin-top: 6px; font-size: var(--text-xs); color: var(--alert); }
+@keyframes tree-generate-rotate { to { transform: rotate(360deg); } }
+
+.tree-unplanned { 
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  background: color-mix(in srgb, var(--ink-muted) 12%, transparent); 
+  padding: 2px 8px;
+  border-radius: var(--radius-pill); white-space: nowrap; 
+}

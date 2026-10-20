@@ -31,4 +31,8 @@ export const updateNoteSchema = z.object({
   // Explicitly allowed here, unlike goalId — a note can be re-linked to
   // a different topic, or unlinked entirely by passing null
   nodeId: objectIdSchema.nullable().optional(),
+  baseUpdatedAt: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), { message: 'baseUpdatedAt must be a valid date' })
+    .optional(),
 });
