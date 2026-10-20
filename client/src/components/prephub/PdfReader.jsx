@@ -55,6 +55,7 @@ const PageSlot = memo(function PageSlot({ n, pageWidth, slotHeight, render, setS
           renderTextLayer={false}
           renderAnnotationLayer={false}
           renderForms={false}
+          suspense={false}          // ← ADD THIS LINE
           loading={<div className="ph-skel" style={{ width: pageWidth, height: slotHeight }} />}
           onLoadSuccess={onRatio}
           onLoadError={(e) => console.error('[PdfReader] page', n, 'load error', e)}
@@ -377,6 +378,7 @@ function PdfReader({ file }) {
             key={blobUrl}
             file={blobUrl}
             options={DOC_OPTIONS}
+            suspense={false}
             loading={null}
             error={null}
             noData={null}

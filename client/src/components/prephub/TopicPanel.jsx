@@ -133,7 +133,7 @@ function TopicPanel({ boot, onStatusChange, onNavigate, onAskAi }) {
       </section>
 
       <section className="ph-section">
-        <button type="button" className="ph-prepbot" onClick={onAsk}>
+        <button type="button" className="ph-prepbot" onClick={onAskAi}>
             <span className="ph-prepbot-icon"><Sparkles size={16} /></span>
             <span className="ph-prepbot-text">
               <strong>PrepBot</strong>
