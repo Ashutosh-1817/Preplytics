@@ -1,21 +1,29 @@
-
-
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Sparkles, ChevronUp, ChevronDown, Trash2, Plus, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
+import { generateChapters, expandChapter, bulkInsertSyllabus, saveSubjectRoadmap } from '../services/aiSyllabus.api.js';
+import useRoadmapEstimate from '../hooks/useRoadmapEstimate.js';
+import { LevelPills, LevelSelect, FitModeToggle, PlanBanner, TopicRow ,FailedBanner} from './roadmap/RoadmapPlanParts.jsx';
 import {
-  Sparkles, ChevronUp, ChevronDown, Trash2, X, Plus, RefreshCw, Loader2,
-  AlertCircle, AlertTriangle, CheckCircle2, Ban,
-} from 'lucide-react';
-import { generateChapters, expandChapter, bulkInsertSyllabus, saveSubjectRoadmap, fetchCapacity } from '../services/aiSyllabus.api.js';
+  DEFAULT_LEVEL,
+  LIMITS,
+  topicFromAi,
+  makeUid,
+  newTopic,
+  countTopics,
+  hasInvalidDraft,
+  sumMinutes,
+  buildSavePayload,
+  planView,
+  needsFitChoice,
+  displayMinutes,
+  isLocked,
+} from '../utils/roadmapDraft.js';
 import { formatDuration } from '../utils/formatDuration.js';
 import './SyllabusPreviewModal.css';
 
 const STAGE = { INPUT: 'input', LOADING: 'loading', PREVIEW: 'preview', SAVING: 'saving' };
 const EXPAND_CONCURRENCY = 3;
-const MAX_CHAPTERS = 10; // must match the backend validator
-const MAX_SUBTOPICS = 8;
-
-let uidCounter = 0;
-const nextUid = () => `ch-${Date.now()}-${uidCounter++}`;
+const SUBJECT_UID = 'subject';
 
 const errorMessage = (err, fallback) => {
   if (err.code === 'ECONNABORTED') return 'This took too long. Please try again.';
@@ -26,9 +34,11 @@ function SyllabusPreviewModal({ goalId, subjectNode = null, onClose, onSaved }) 
   const [stage, setStage] = useState(STAGE.INPUT);
   const [subject, setSubject] = useState(subjectNode?.title ?? '');
   const [context, setContext] = useState('');
-  const [chapters, setChapters] = useState([]); // { uid, title, subtopics: [{ title, estimatedMinutes, included }], status, error }
+  // { uid, title, level|null, subtopics: [topic], status, error }
+  const [chapters, setChapters] = useState([]);
   const [error, setError] = useState('');
-  const [capacity, setCapacity] = useState(null);
+  const [defaultLevel, setDefaultLevel] = useState(DEFAULT_LEVEL);
+  const [mode, setMode] = useState('fit'); // 'fit' = shorten to the deadline, 'comfortable' = keep full time
 
   const aliveRef = useRef(true);
   const runIdRef = useRef(0);
@@ -40,97 +50,73 @@ function SyllabusPreviewModal({ goalId, subjectNode = null, onClose, onSaved }) 
     };
   }, []);
 
-  useEffect(() => {
-    fetchCapacity(goalId)
-      .then((data) => {
-                if (!aliveRef.current) return;
-                  const selfMinutes =
-                    subjectNode && subjectNode.isActionable && subjectNode.status !== 'completed'
-                    ? subjectNode.estimatedMinutes || 30
-                    : 0;
-                  setCapacity({ ...data, existingRemainingMinutes: Math.max(0, data.existingRemainingMinutes - selfMinutes) });
-      })
-      .catch(() => {
-        // Non-blocking: the backend still enforces the limit on save
-      });
-  }, [goalId]);
-
   const isStale = (runId) => !aliveRef.current || runIdRef.current !== runId;
 
   const patchChapter = (uid, patch) =>
     setChapters((prev) => prev.map((c) => (c.uid === uid ? { ...c, ...patch } : c)));
+
+  const updateTopics = (uid, fn) =>
+    setChapters((prev) => prev.map((c) => (c.uid === uid ? { ...c, subtopics: fn(c.subtopics) } : c)));
+
+  const patchTopic = (uid, topicUid, patch) =>
+    updateTopics(uid, (topics) => topics.map((t) => (t.uid === topicUid ? { ...t, ...patch } : t)));
 
   // ---------- Derived state ----------
 
   const readyCount = chapters.filter((c) => c.status === 'ready').length;
   const loadingCount = chapters.filter((c) => c.status === 'loading').length;
   const errorCount = chapters.filter((c) => c.status === 'error').length;
-  const totalSubtopics = chapters.reduce((sum, c) => sum + c.subtopics.length, 0);
 
-  // Only checked subtopics are counted and saved; a chapter with none
-  // checked is left out entirely.
-  const includedChapters = chapters
-    .map((c) => ({ ...c, subtopics: c.subtopics.filter((s) => s.included) }))
-    .filter((c) => c.subtopics.length > 0);
-
-  const selectedCount = includedChapters.reduce((sum, c) => sum + c.subtopics.length, 0);
-  const selectedMinutes = includedChapters.reduce(
-    (sum, c) => sum + c.subtopics.reduce((m, s) => m + (Number(s.estimatedMinutes) || 0), 0),
-    0
+  // The one subject, in the shape the shared helpers expect
+  const draft = useMemo(
+    () => [{ uid: SUBJECT_UID, title: subject, level: null, status: 'ready', chapters }],
+    [subject, chapters]
   );
+  const totalTopics = countTopics(draft);
 
-  const dueLabel = capacity?.hasDeadline
-    ? new Date(capacity.targetDate).toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        timeZone: 'UTC',
-      })
-    : '';
+  // Personalised time from the server (no AI call). Every topic is included, always.
+  const estimate = useRoadmapEstimate({
+    goalId,
+    subjects: draft,
+    defaultLevel,
+    subjectNodeId: subjectNode?._id ?? null,
+    enabled: stage === STAGE.PREVIEW || stage === STAGE.SAVING,
+  });
+  const indexed = estimate.data;
 
-  // Mirrors the backend rules exactly, so the live check and the server agree
-  const capacityView = (() => {
-    if (!capacity) return null;
-    if (!capacity.hasDeadline) return { kind: 'no-deadline' };
-    if (loadingCount > 0) return { kind: 'checking' };
+  // "Keep full time" only means something while the deadline is actually tight
+  const fitChoice = Boolean(indexed && needsFitChoice(indexed.summary));
+  const effectiveMode = fitChoice ? mode : 'fit';
+  const view = indexed ? planView(indexed.summary, effectiveMode) : null;
 
-    const total = selectedMinutes + capacity.existingRemainingMinutes;
-    const availableMinutes = capacity.days * capacity.dailyCapacityMinutes;
-    const requiredDaily = Math.ceil(total / capacity.days);
-    const blocked = requiredDaily > capacity.maxDailyMinutes;
-    const over = total > availableMinutes;
+  const plannedMinutes = sumMinutes(chapters.flatMap((c) => c.subtopics), indexed, effectiveMode);
+  const hasInvalid = hasInvalidDraft(draft);
+  const blocked = view?.kind === 'blocked';
 
-    return {
-      kind: blocked ? 'blocked' : over ? 'over' : 'ok',
-      total,
-      availableMinutes,
-      requiredDaily,
-      overBy: Math.max(0, total - availableMinutes),
-      hardLimitOverBy: Math.max(0, total - capacity.maxDailyMinutes * capacity.days),
-    };
-  })();
-
-  const blocked = capacityView?.kind === 'blocked';
-
-  const hasInvalid = includedChapters.some(
-    (c) => !c.title.trim() || c.subtopics.some((s) => !s.title.trim() || !(Number(s.estimatedMinutes) > 0))
-  );
+  const savePayload = estimate.fresh ? buildSavePayload(draft, indexed, effectiveMode) : null;
+  const savedChapters = savePayload?.[0]?.chapters ?? [];
 
   const canSave =
+    stage === STAGE.PREVIEW &&
     chapters.length > 0 &&
     chapters.every((c) => c.status === 'ready') &&
-    includedChapters.length > 0 &&
+    totalTopics > 0 &&
     !hasInvalid &&
+    savedChapters.length > 0 &&
     !blocked;
 
-  const confirmLabel =
+ const confirmLabel =
     stage === STAGE.SAVING
       ? 'Saving…'
       : loadingCount > 0
         ? `Waiting for ${loadingCount}…`
-        : blocked
-          ? 'Trim topics to save'
-          : 'Confirm & Save';
+        : errorCount > 0
+          ? `Retry or remove ${errorCount} failed`
+          : blocked
+            ? 'Extend the deadline or remove topics'
+            : !estimate.fresh && estimate.status !== 'error' && totalTopics > 0
+              ? 'Calculating…'
+              : 'Confirm & Save';
 
   // ---------- Generation ----------
 
@@ -144,10 +130,7 @@ function SyllabusPreviewModal({ goalId, subjectNode = null, onClose, onSaved }) 
         context: context.trim(),
       });
       if (isStale(runId)) return;
-      patchChapter(uid, {
-        status: 'ready',
-        subtopics: result.subtopics.map((s) => ({ ...s, included: true })),
-      });
+      patchChapter(uid, { status: 'ready', subtopics: result.subtopics.map(topicFromAi) });
     } catch (err) {
       if (isStale(runId)) return;
       patchChapter(uid, { status: 'error', error: errorMessage(err, 'Could not load topics for this chapter.') });
@@ -180,13 +163,13 @@ function SyllabusPreviewModal({ goalId, subjectNode = null, onClose, onSaved }) 
       if (isStale(runId)) return;
 
       const list = result.chapters.map((c) => ({
-        uid: nextUid(),
+        uid: makeUid('ch'),
         title: c.title,
+        level: null,
         subtopics: [],
         status: 'loading',
         error: '',
       }));
-
 
       setChapters(list);
       setStage(STAGE.PREVIEW);
@@ -198,7 +181,6 @@ function SyllabusPreviewModal({ goalId, subjectNode = null, onClose, onSaved }) 
     }
   };
 
-
   const handleRetryChapter = (chapter) => {
     expandOne(chapter.uid, chapter.title, chapters.map((c) => c.title), runIdRef.current);
   };
@@ -209,19 +191,13 @@ function SyllabusPreviewModal({ goalId, subjectNode = null, onClose, onSaved }) 
   };
 
   const handleConfirm = async () => {
+    if (savedChapters.length === 0) return;
     setError('');
     setStage(STAGE.SAVING);
     try {
-      const payload = includedChapters.map((c) => ({
-        title: c.title.trim(),
-        subtopics: c.subtopics.map((s) => ({
-          title: s.title.trim(),
-          estimatedMinutes: Number(s.estimatedMinutes),
-        })),
-      }));
-        const result = subjectNode
-        ? await saveSubjectRoadmap(goalId, subjectNode._id, payload)
-        : await bulkInsertSyllabus(goalId, subject.trim(), payload);
+      const result = subjectNode
+        ? await saveSubjectRoadmap(goalId, subjectNode._id, savedChapters)
+        : await bulkInsertSyllabus(goalId, subject.trim(), savedChapters);
       onSaved(result);
     } catch (err) {
       setError(errorMessage(err, 'Could not save the syllabus.'));
@@ -230,8 +206,6 @@ function SyllabusPreviewModal({ goalId, subjectNode = null, onClose, onSaved }) 
   };
 
   // ---------- Editing helpers (keyed by uid) ----------
-
-  const updateChapterTitle = (uid, title) => patchChapter(uid, { title });
 
   const deleteChapter = (uid) => setChapters((prev) => prev.filter((c) => c.uid !== uid));
 
@@ -247,64 +221,20 @@ function SyllabusPreviewModal({ goalId, subjectNode = null, onClose, onSaved }) 
   };
 
   const addChapter = () => {
-    setChapters((prev) => [
-      ...prev,
-      {
-        uid: nextUid(),
-        title: 'New chapter',
-        subtopics: [{ title: 'New subtopic', estimatedMinutes: 60, included: true }],
-        status: 'ready',
-        error: '',
-      },
-    ]);
-  };
-
-  const updateSubtopic = (uid, si, field, value) => {
     setChapters((prev) =>
-      prev.map((c) =>
-        c.uid !== uid
-          ? c
-          : { ...c, subtopics: c.subtopics.map((s, j) => (j === si ? { ...s, [field]: value } : s)) }
-      )
+      prev.length >= LIMITS.chapters
+        ? prev
+        : [
+            ...prev,
+            { uid: makeUid('ch'), title: 'New chapter', level: null, subtopics: [newTopic()], status: 'ready', error: '' },
+          ]
     );
   };
 
-  const toggleSubtopic = (uid, si) => {
-    setChapters((prev) =>
-      prev.map((c) =>
-        c.uid !== uid
-          ? c
-          : { ...c, subtopics: c.subtopics.map((s, j) => (j === si ? { ...s, included: !s.included } : s)) }
-      )
-    );
-  };
+  const addSubtopic = (uid) =>
+    updateTopics(uid, (topics) => (topics.length >= LIMITS.subtopics ? topics : [...topics, newTopic()]));
 
-  // Checks everything on, or, if everything is already on, everything off
-  const toggleChapter = (uid) => {
-    setChapters((prev) =>
-      prev.map((c) => {
-        if (c.uid !== uid) return c;
-        const allOn = c.subtopics.length > 0 && c.subtopics.every((s) => s.included);
-        return { ...c, subtopics: c.subtopics.map((s) => ({ ...s, included: !allOn })) };
-      })
-    );
-  };
-
-  const deleteSubtopic = (uid, si) => {
-    setChapters((prev) =>
-      prev.map((c) => (c.uid !== uid ? c : { ...c, subtopics: c.subtopics.filter((_, j) => j !== si) }))
-    );
-  };
-
-  const addSubtopic = (uid) => {
-    setChapters((prev) =>
-      prev.map((c) =>
-        c.uid !== uid
-          ? c
-          : { ...c, subtopics: [...c.subtopics, { title: 'New subtopic', estimatedMinutes: 60, included: true }] }
-      )
-    );
-  };
+  const removeSubtopic = (uid, topicUid) => updateTopics(uid, (topics) => topics.filter((t) => t.uid !== topicUid));
 
   return (
     <div className="modal-backdrop" onClick={stage === STAGE.INPUT ? onClose : undefined}>
@@ -315,8 +245,8 @@ function SyllabusPreviewModal({ goalId, subjectNode = null, onClose, onSaved }) 
               <Sparkles size={20} /> AI Generate Roadmap
             </h2>
             <p className="text-muted" style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-4)' }}>
-              Enter a subject and we'll draft chapters first, then fill in each chapter's topics. You can trim
-              and edit everything before saving.
+              Enter a subject and we'll draft chapters first, then fill in each chapter's topics. You can edit
+              everything before saving, and tell us how well you already know it.
             </p>
 
             {error && <p className="auth-error">{error}</p>}
@@ -374,7 +304,7 @@ function SyllabusPreviewModal({ goalId, subjectNode = null, onClose, onSaved }) 
               <p className="text-muted" style={{ fontSize: 'var(--text-xs)' }}>
                 {loadingCount > 0
                   ? `Writing topics… ${readyCount} of ${chapters.length} chapters ready`
-                  : `${selectedCount} of ${totalSubtopics} subtopics selected · ${formatDuration(selectedMinutes)}. Uncheck anything you already know`}
+                  : `${totalTopics} topics · ${formatDuration(plannedMinutes)} planned`}
               </p>
               {loadingCount > 0 && (
                 <div className="syllabus-progress">
@@ -384,238 +314,142 @@ function SyllabusPreviewModal({ goalId, subjectNode = null, onClose, onSaved }) 
                   />
                 </div>
               )}
-              {errorCount > 0 && (
-                <p className="syllabus-hint">
-                  {errorCount} chapter{errorCount > 1 ? 's' : ''} failed. Retry or remove them to continue.
-                </p>
-              )}
+                 <FailedBanner
+                  failures={chapters.filter((c) => c.status === 'error').map((c) => ({ key: c.uid, label: c.title, message: c.error }))}
+                  kind="chapter"
+                  onRetry={(uid) => {
+                    const c = chapters.find((x) => x.uid === uid);
+                    if (c) handleRetryChapter(c);
+                  }}
+                  onRemove={deleteChapter}
+                  onRetryAll={() => chapters.filter((c) => c.status === 'error').forEach(handleRetryChapter)}
+                />
             </div>
 
-            {capacityView?.kind === 'no-deadline' && (
-              <p className="text-muted" style={{ fontSize: 'var(--text-xs)', marginBottom: 'var(--space-3)' }}>
-                This goal has no deadline, so there's no capacity limit.
-              </p>
-            )}
+            <LevelPills value={defaultLevel} onChange={setDefaultLevel} title={`How well do you already know ${subject.trim() || 'this subject'}?`} />
 
-            {capacityView && capacityView.kind !== 'no-deadline' && (
-              <div className={`capacity-banner capacity-${capacityView.kind}`}>
-                {capacityView.kind === 'checking' && (
-                  <div className="capacity-row">
-                    <Loader2 size={15} className="syllabus-spin" />
-                    <span>Checking capacity once every chapter has loaded…</span>
-                  </div>
-                )}
+            {fitChoice && loadingCount === 0 && <FitModeToggle mode={mode} onChange={setMode} />}
 
-                {capacityView.kind === 'ok' && (
-                  <div className="capacity-row">
-                    <CheckCircle2 size={15} />
-                    <span>
-                      <span className="capacity-strong">Fits your schedule.</span>{' '}
-                      {formatDuration(capacityView.total)} of {formatDuration(capacityView.availableMinutes)} available until {dueLabel}.
-                    </span>
-                  </div>
-                )}
-
-                {capacityView.kind === 'over' && (
-                  <div className="capacity-row">
-                    <AlertTriangle size={15} />
-                    <div className="capacity-lines">
-                      <span>
-                        <span className="capacity-strong">Warning:</span> This syllabus requires{' '}
-                        {formatDuration(capacityView.total)}
-                        {capacity.existingRemainingMinutes > 0 &&
-                          ` (including ${formatDuration(capacity.existingRemainingMinutes)} already on your roadmap)`}
-                        , but you only have {formatDuration(capacityView.availableMinutes)} available until {dueLabel}.
-                      </span>
-                      <span>
-                        To finish all selected topics by {dueLabel}, you must increase your daily study time to{' '}
-                        <span className="capacity-strong">{formatDuration(capacityView.requiredDaily)}</span>.
-                      </span>
-                      <span className="capacity-note">
-                        Or uncheck about {formatDuration(capacityView.overBy)} of topics you already know to fit your
-                        current {formatDuration(capacity.dailyCapacityMinutes)} a day.
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {capacityView.kind === 'blocked' && (
-                  <div className="capacity-row">
-                    <Ban size={15} />
-                    <div className="capacity-lines">
-                      <span>
-                        <span className="capacity-strong">Too much for this deadline.</span> Finishing by {dueLabel} would
-                        take {formatDuration(capacityView.requiredDaily)} every day, over the{' '}
-                        {capacity.maxDailyMinutes / 60}-hour daily limit, so a schedule can't be built.
-                      </span>
-                      <span className="capacity-note">
-                        Uncheck at least {formatDuration(capacityView.hardLimitOverBy)} of topics, or extend this goal's
-                        deadline with Edit goal.
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {capacityView.kind !== 'checking' && (
-                  <>
-                    <div className="capacity-stats">
-                      <span>Selected <strong>{formatDuration(selectedMinutes)}</strong></span>
-                      {capacity.existingRemainingMinutes > 0 && (
-                        <span>Already on roadmap <strong>{formatDuration(capacity.existingRemainingMinutes)}</strong></span>
-                      )}
-                      <span>Available <strong>{formatDuration(capacityView.availableMinutes)}</strong></span>
-                    </div>
-                    <div className="capacity-meter">
-                      <div
-                        className="capacity-meter-fill"
-                        style={{
-                          width: `${Math.min(100, (capacityView.total / Math.max(1, capacityView.availableMinutes)) * 100)}%`,
-                        }}
-                      />
-                    </div>
-                    {Math.abs(capacity.efficiencyRatio - 1) > 0.01 && (
-                      <span className="capacity-note">Your daily time is adjusted to your measured study pace.</span>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
+            <PlanBanner view={view} status={estimate.status} error={estimate.error} onRetry={estimate.retry} waiting={loadingCount > 0} />
 
             {error && <p className="auth-error">{error}</p>}
 
-            <div className="syllabus-chapters">
-              {chapters.map((chapter, ci) => {
-                const includedInChapter = chapter.subtopics.filter((s) => s.included).length;
-                const allIncluded = chapter.subtopics.length > 0 && includedInChapter === chapter.subtopics.length;
-                const someIncluded = includedInChapter > 0;
-                const chapterMinutes = chapter.subtopics
-                  .filter((s) => s.included)
-                  .reduce((m, s) => m + (Number(s.estimatedMinutes) || 0), 0);
-
-                return (
-                  <div key={chapter.uid} className="syllabus-chapter">
-                    <div className="syllabus-chapter-header">
-                      <div className="syllabus-reorder">
-                        <button type="button" aria-label="Move up" onClick={() => moveChapter(chapter.uid, -1)} disabled={ci === 0}>
-                          <ChevronUp size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Move down"
-                          onClick={() => moveChapter(chapter.uid, 1)}
-                          disabled={ci === chapters.length - 1}
-                        >
-                          <ChevronDown size={13} />
-                        </button>
-                      </div>
-
-                      <input
-                        type="checkbox"
-                        className="syllabus-check"
-                        title="Include or skip this whole chapter"
-                        checked={allIncluded}
-                        ref={(el) => {
-                          if (el) el.indeterminate = someIncluded && !allIncluded;
-                        }}
-                        onChange={() => toggleChapter(chapter.uid)}
-                        disabled={chapter.status !== 'ready' || chapter.subtopics.length === 0}
-                      />
-
-                      <input
-                        className="syllabus-chapter-title"
-                        value={chapter.title}
-                        onChange={(e) => updateChapterTitle(chapter.uid, e.target.value)}
-                      />
-
-                      {chapter.status === 'ready' && (
-                        <span className="syllabus-chapter-total">{formatDuration(chapterMinutes)}</span>
-                      )}
-
-                      {chapter.status === 'ready' && (
-                        <button
-                          type="button"
-                          className="syllabus-delete"
-                          title="Regenerate topics"
-                          onClick={() => handleRegenerateChapter(chapter)}
-                        >
-                          <RefreshCw size={14} />
-                        </button>
-                      )}
-                      <button type="button" className="syllabus-delete" title="Remove chapter" onClick={() => deleteChapter(chapter.uid)}>
-                        <Trash2 size={14} />
+            <div className={`syllabus-chapters ${estimate.fresh ? '' : 'rp-stale'}`}>
+              {chapters.map((chapter, ci) => (
+                <div key={chapter.uid} className="syllabus-chapter">
+                  <div className="syllabus-chapter-header">
+                    <div className="syllabus-reorder">
+                      <button type="button" aria-label="Move up" onClick={() => moveChapter(chapter.uid, -1)} disabled={ci === 0}>
+                        <ChevronUp size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Move down"
+                        onClick={() => moveChapter(chapter.uid, 1)}
+                        disabled={ci === chapters.length - 1}
+                      >
+                        <ChevronDown size={13} />
                       </button>
                     </div>
 
-                    {chapter.status === 'loading' && (
-                      <div className="syllabus-subtopics">
-                        <div className="syllabus-chapter-state">
-                          <Loader2 size={14} className="syllabus-spin" /> Writing topics…
-                        </div>
-                        <div className="skeleton" style={{ height: 14, width: '85%' }} />
-                        <div className="skeleton" style={{ height: 14, width: '70%' }} />
-                      </div>
-                    )}
+                    <input
+                      className="syllabus-chapter-title"
+                      value={chapter.title}
+                      aria-label="Chapter title"
+                      onChange={(e) => patchChapter(chapter.uid, { title: e.target.value })}
+                    />
 
-                    {chapter.status === 'error' && (
-                      <div className="syllabus-subtopics">
-                        <div className="syllabus-chapter-state syllabus-chapter-error">
-                          <AlertCircle size={14} /> {chapter.error}
-                        </div>
-                        <button type="button" className="syllabus-retry-btn" onClick={() => handleRetryChapter(chapter)}>
-                          <RefreshCw size={13} /> Retry
-                        </button>
-                      </div>
+                    {chapter.status === 'ready' && (
+                      <LevelSelect
+                        value={chapter.level}
+                        inheritLabel="Same as overall"
+                        ariaLabel={`How well you know ${chapter.title}`}
+                        onChange={(level) => patchChapter(chapter.uid, { level })}
+                      />
                     )}
 
                     {chapter.status === 'ready' && (
-                      <div className="syllabus-subtopics">
-                        {chapter.subtopics.map((sub, si) => (
-                          <div key={si} className={`syllabus-subtopic-row ${sub.included ? '' : 'syllabus-subtopic-row-off'}`}>
-                            <input
-                              type="checkbox"
-                              className="syllabus-check"
-                              title={sub.included ? 'Uncheck if you already know this' : 'Include this topic'}
-                              checked={sub.included}
-                              onChange={() => toggleSubtopic(chapter.uid, si)}
-                            />
-                            <input
-                              className="syllabus-subtopic-title"
-                              value={sub.title}
-                              onChange={(e) => updateSubtopic(chapter.uid, si, 'title', e.target.value)}
-                            />
-                            <input
-                              type="number"
-                              min="5"
-                              step="5"
-                              className="syllabus-subtopic-minutes"
-                              value={sub.estimatedMinutes}
-                              onChange={(e) => updateSubtopic(chapter.uid, si, 'estimatedMinutes', Number(e.target.value))}
-                            />
-                            <span className="text-muted" style={{ fontSize: 'var(--text-xs)' }}>min</span>
-                            <button type="button" className="syllabus-delete" title="Remove subtopic" onClick={() => deleteSubtopic(chapter.uid, si)}>
-                              <X size={14} />
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          className="syllabus-add-subtopic"
-                          onClick={() => addSubtopic(chapter.uid)}
-                          disabled={chapter.subtopics.length >= MAX_SUBTOPICS}
-                        >
-                          <Plus size={13} /> Add subtopic
-                        </button>
-                      </div>
+                      <span className="syllabus-chapter-total">{formatDuration(sumMinutes(chapter.subtopics, indexed, effectiveMode))}</span>
                     )}
+
+                    {chapter.status === 'ready' && (
+                      <button
+                        type="button"
+                        className="syllabus-delete"
+                        title="Regenerate topics"
+                        aria-label="Regenerate topics"
+                        onClick={() => handleRegenerateChapter(chapter)}
+                      >
+                        <RefreshCw size={14} />
+                      </button>
+                    )}
+                    <button type="button" className="syllabus-delete" title="Remove chapter" aria-label="Remove chapter" onClick={() => deleteChapter(chapter.uid)}>
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-                );
-              })}
+
+                  {chapter.status === 'loading' && (
+                    <div className="syllabus-subtopics">
+                      <div className="syllabus-chapter-state">
+                        <Loader2 size={14} className="syllabus-spin" /> Writing topics…
+                      </div>
+                      <div className="skeleton" style={{ height: 14, width: '85%' }} />
+                      <div className="skeleton" style={{ height: 14, width: '70%' }} />
+                    </div>
+                  )}
+
+                  {chapter.status === 'error' && (
+                    <div className="syllabus-subtopics">
+                      <div className="syllabus-chapter-state syllabus-chapter-error">
+                        <AlertCircle size={14} /> {chapter.error}
+                      </div>
+                      <button type="button" className="syllabus-retry-btn" onClick={() => handleRetryChapter(chapter)}>
+                        <RefreshCw size={13} /> Retry
+                      </button>
+                    </div>
+                  )}
+
+                  {chapter.status === 'ready' && (
+                    <div className="syllabus-subtopics">
+                      {chapter.subtopics.length === 0 && (
+                        <p className="rp-empty-chapter">No topics left. This chapter will not be saved unless you add one.</p>
+                      )}
+
+                      {chapter.subtopics.map((topic) => (
+                        <TopicRow
+                          key={topic.uid}
+                          topic={topic}
+                          minutes={displayMinutes(topic, indexed, effectiveMode)}
+                          info={indexed?.topics[topic.uid]}
+                          mode={effectiveMode}
+                          locked={isLocked(topic)}
+                          onTitle={(title) => patchTopic(chapter.uid, topic.uid, { title })}
+                          onMinutes={(minutes) => patchTopic(chapter.uid, topic.uid, { lockedMinutes: minutes })}
+                          onUnlock={() => patchTopic(chapter.uid, topic.uid, { lockedMinutes: null })}
+                          onKind={(kind) => patchTopic(chapter.uid, topic.uid, { kind })}
+                          onPriority={(priority) => patchTopic(chapter.uid, topic.uid, { priority })}
+                          onRemove={() => removeSubtopic(chapter.uid, topic.uid)}
+                        />
+                      ))}
+
+                      <button
+                        type="button"
+                        className="syllabus-add-subtopic"
+                        onClick={() => addSubtopic(chapter.uid)}
+                        disabled={chapter.subtopics.length >= LIMITS.subtopics}
+                      >
+                        <Plus size={13} /> Add topic
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
 
               <button
                 type="button"
                 className="btn btn-ghost"
                 onClick={addChapter}
-                disabled={chapters.length >= MAX_CHAPTERS}
+                disabled={chapters.length >= LIMITS.chapters}
                 style={{ width: '100%' }}
               >
                 <Plus size={16} /> Add chapter

@@ -1,4 +1,6 @@
 import './CalendarGrid.css';
+import { isPastKey, displayStatus } from '../utils/calendarDays.js';
+
 
 const STATUS_DOT = {
   completed: 'status-complete',
@@ -35,19 +37,21 @@ function CalendarGrid({ year, month, tasksByDate, onDayClick, selectedDate }) {
         const dayTasks = tasksByDate[key] || [];
         const isToday = key === todayKey;
         const isSelected = key === selectedDate;
+        const isPast = isPastKey(key);
         const allCompleted = dayTasks.length > 0 && dayTasks.every((t) => t.status === 'completed');
 
         return (
           <div
             key={key}
-            className={`calendar-cell ${isToday ? 'calendar-cell-today' : ''} ${isSelected ? 'calendar-cell-selected' : ''} ${allCompleted ? 'calendar-cell-done' : ''}`}
+            className={`calendar-cell ${isToday ? 'calendar-cell-today' : ''} ${isSelected ? 'calendar-cell-selected' : ''} ${allCompleted ? 'calendar-cell-done' : ''} ${isPast ? 'calendar-cell-past' : ''}`}
+            title={isPast ? 'Past day: view only' : undefined}
             onClick={() => onDayClick(key, dayTasks)}
           >
             <span className="calendar-date">{allCompleted ? '✓' : date.getUTCDate()}</span>
             {dayTasks.length > 0 && (
               <div className="calendar-dots">
                 {dayTasks.slice(0, 4).map((t) => (
-                  <span key={t._id} className={`calendar-dot ${STATUS_DOT[t.status]}`} />
+                  <span key={t._id} className={`calendar-dot ${STATUS_DOT[displayStatus(t, key)]}`} />
                 ))}
               </div>
             )}

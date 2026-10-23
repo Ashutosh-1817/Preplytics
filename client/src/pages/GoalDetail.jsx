@@ -24,6 +24,7 @@ import GoalRoadmapWizard from '../components/GoalRoadmapWizard.jsx';
 import GoalOverviewCard from '../components/GoalOverviewCard.jsx';
 import GoalSubjectsModal from '../components/GoalSubjectsModal.jsx';
 import { markSessionHandoff } from '../utils/sessionHandoff.js';
+import ChangeLevelDialog from '../components/roadmap/ChangeLevelDialog.jsx';
 
 const findNodeById = (nodes, id) => {
   for (const node of nodes) {
@@ -60,6 +61,7 @@ function GoalDetail() {
   const [showSubjectsModal, setShowSubjectsModal] = useState(false);
 
   const selectedNode = tree && selectedNodeId ? findNodeById(tree, selectedNodeId) : null;
+  const [nodeForLevel, setNodeForLevel] = useState(null);
 
   const loadAll = async () => {
     const [g, t] = await Promise.all([fetchGoal(goalId), fetchRoadmapTree(goalId)]);
@@ -291,6 +293,7 @@ const handleSubjectsSaved = async (result) => {
               onSelect={handleSelectNode}
               selectedNodeId={selectedNodeId}
               onGenerateSubject={setSubjectForModal}
+              onChangeLevel={setNodeForLevel}
             />
           </div>
 
@@ -356,6 +359,17 @@ const handleSubjectsSaved = async (result) => {
       )}
 
 
+      {nodeForLevel && (
+       <ChangeLevelDialog
+          goalId={goalId}
+          node={nodeForLevel}
+          onClose={() => setNodeForLevel(null)}
+          onApplied={async () => {
+            setNodeForLevel(null);
+            await loadAll();
+          }}
+        />
+      )}
 
       {showRoadmapWizard && (
         <GoalRoadmapWizard

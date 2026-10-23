@@ -20,6 +20,7 @@ import {
 } from '../utils/fileType.js';
 import { extractPdfFromUrl, ExtractionError } from '../services/pdfExtract.service.js';
 import { getOwnedGoalOrFail } from './goal.controller.js';
+import Annotation from '../models/Annotation.model.js';
 
 const userFolder = (userId) => `preplytics/${userId}`;
 const STALE_PENDING_MS = 90 * 1000;
@@ -297,6 +298,8 @@ export const deleteFile = asyncHandler(async (req, res) => {
     // Don't strand the database record because storage cleanup hiccuped
     console.error(`[CLOUDINARY CLEANUP FAILED] ${file.cloudinaryPublicId}`, err.message);
   }
+
+  await Annotation.deleteMany({ owner: req.user._id, fileId: file._id });
 
   await file.deleteOne();
 

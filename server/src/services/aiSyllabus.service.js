@@ -1,5 +1,3 @@
-// src/services/aiSyllabus.service.js
-// FULL FILE: replace everything currently in this file with this.
 
 import { generateCompletion } from './aiProvider.service.js';
 import {
@@ -10,6 +8,8 @@ import {
 } from '../validators/aiSyllabus.validator.js';
 import ApiError from '../utils/ApiError.js';
 import ErrorCodes from '../utils/errorCodes.js';
+import { DEFAULT_LEVEL } from '../config/estimation.config.js';
+import { personalizeTopic } from './estimation.service.js';
 
 const extractJson = (raw) => {
   const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -43,6 +43,13 @@ export const requestJsonWithRetry = async (args) => (await requestJson(args)) ??
 
 const learnerContextLine = (context) =>
   context ? `\nAdditional context from the learner: ${context}` : '';
+
+// The topic list must be identical for every learner. How long each topic takes
+// THEM is worked out afterwards by the server, never by the model.
+const TOPIC_FIELD_RULES = `- Cover EVERY topic a student needs for this part of the syllabus, including the basics. The list must be complete and the same for any learner, whatever they already know
+- baseMinutes: how long an average beginner needs to understand the topic AND do basic practice on it. A multiple of 5, between 15 and 180
+- kind: exactly one of "concept" (understanding ideas), "practice" (solving problems, coding, numericals) or "memorize" (facts, formulas, definitions)
+- priority: exactly one of "core" (high-yield for the goal), "important", or "optional" (nice to have, low-yield)`;
 
 // ---------- Step 1: chapter titles only ----------
 
@@ -83,7 +90,14 @@ Rules:
 
 // ---------- Step 2: subtopics for ONE chapter ----------
 
-export const generateChapterTopics = async (subject, goalTitle, chapterTitle, siblingChapters, context) => {
+export const generateChapterTopics = async (
+  subject,
+  goalTitle,
+  chapterTitle,
+  siblingChapters,
+  context,
+  level = DEFAULT_LEVEL
+) => {
   const others = siblingChapters.filter((t) => t !== chapterTitle);
 
   const system = `You are a curriculum planner breaking one chapter into study subtopics.
@@ -95,12 +109,12 @@ Chapter to break down: "${chapterTitle}"${
   }${learnerContextLine(context)}
 
 Respond with ONLY valid JSON, no markdown fences, no explanation, in exactly this shape:
-{ "subtopics": [ { "title": "Subtopic name", "estimatedMinutes": 60 } ] }
+{ "subtopics": [ { "title": "Subtopic name", "baseMinutes": 60, "kind": "concept", "priority": "core" } ] }
 
 Rules:
 - 2 to 8 subtopics, in a sensible learning order
 - Depth and emphasis appropriate for "${goalTitle}"
-- estimatedMinutes must be a realistic study time per subtopic (typically 30-180)
+${TOPIC_FIELD_RULES}
 - Do not include anything outside the JSON object`;
 
   const result = await requestJsonWithRetry({
@@ -118,7 +132,7 @@ Rules:
     );
   }
 
-  return result;
+  return { subtopics: result.subtopics.map((topic) => personalizeTopic(topic, level)) };
 };
 
 // ---------- Goal-level, step 1: core subjects ----------
@@ -159,7 +173,7 @@ Rules:
 
 // ---------- Goal-level, step 2: chapters and topics for ONE subject ----------
 
-export const generateSubjectBreakdown = async (goalTitle, subject, siblingSubjects, context) => {
+export const generateSubjectBreakdown = async (goalTitle, subject, siblingSubjects, context, level = DEFAULT_LEVEL) => {
   const others = siblingSubjects.filter((t) => t !== subject);
 
   const system = `You are a curriculum planner breaking one subject into chapters and study topics.
@@ -170,13 +184,13 @@ Subject to break down: "${subject}"${
   }${learnerContextLine(context)}
 
 Respond with ONLY valid JSON, no markdown fences, no explanation, in exactly this shape:
-{ "chapters": [ { "title": "Chapter name", "subtopics": [ { "title": "Topic name", "estimatedMinutes": 60 } ] } ] }
+{ "chapters": [ { "title": "Chapter name", "subtopics": [ { "title": "Topic name", "baseMinutes": 60, "kind": "concept", "priority": "core" } ] } ] }
 
 Rules:
 - 3 to 7 chapters in a sensible learning order
 - 3 to 6 subtopics per chapter
 - Depth and emphasis appropriate for "${goalTitle}"
-- estimatedMinutes must be a realistic study time per topic (typically 30-180)
+${TOPIC_FIELD_RULES}
 - Do not include anything outside the JSON object`;
 
   const result = await requestJsonWithRetry({
@@ -195,5 +209,10 @@ Rules:
     );
   }
 
-  return result;
+  return {
+    chapters: result.chapters.map((chapter) => ({
+      title: chapter.title,
+      subtopics: chapter.subtopics.map((topic) => personalizeTopic(topic, level)),
+    })),
+  };
 };

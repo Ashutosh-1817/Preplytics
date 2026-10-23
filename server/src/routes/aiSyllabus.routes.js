@@ -9,6 +9,7 @@ import {
   expandSubjectSchema,
   bulkInsertGoalSchema,
   saveSubjectListSchema,
+  estimateTimeSchema,
 } from '../validators/aiSyllabus.validator.js';
 import {
   generateAiChapters,
@@ -19,10 +20,13 @@ import {
   expandAiSubject,
   bulkInsertGoalSyllabus,
   saveSubjectList,
+  estimateRoadmapTime,
 } from '../controllers/aiSyllabus.controller.js';
 import { generateOverviewSchema } from '../validators/goalOverview.validator.js';
 import { generateOverview } from '../controllers/goalOverview.controller.js';
 import { saveSubjectRoadmapSchema } from '../validators/aiSyllabus.validator.js';
+import { relevelSchema } from '../validators/relevel.validator.js';
+import { previewRelevel, applyRelevel } from '../controllers/relevel.controller.js';
 
 const router = Router({ mergeParams: true });
 
@@ -30,6 +34,7 @@ router.use(requireAuth);
 
 // Single-subject flow (existing modal)
 router.post('/ai-syllabus/chapters', validate(generateSyllabusSchema), generateAiChapters);
+router.post('/ai-syllabus/expand', validate(expandChapterSchema), expandAiChapter);
 router.post('/ai-syllabus/expand', validate(expandChapterSchema), expandAiChapter);
 router.post('/bulk-nodes', validate(bulkInsertSchema), bulkInsertSyllabus);
 
@@ -41,5 +46,10 @@ router.post('/bulk-subjects', validate(bulkInsertGoalSchema), bulkInsertGoalSyll
 router.post('/overview', validate(generateOverviewSchema), generateOverview);
 router.post('/nodes/:nodeId/roadmap', validate(saveSubjectRoadmapSchema), saveSubjectRoadmap);
 router.post('/subject-list', validate(saveSubjectListSchema), saveSubjectList);
+router.post('/ai-syllabus/estimate', validate(estimateTimeSchema), estimateRoadmapTime);   // <-- add these two lines
+router.post('/bulk-nodes', validate(bulkInsertSchema), bulkInsertSyllabus);
+router.post('/nodes/:nodeId/relevel/preview', validate(relevelSchema), previewRelevel);
+router.post('/nodes/:nodeId/relevel', validate(relevelSchema), applyRelevel);
+
 
 export default router;

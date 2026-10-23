@@ -102,3 +102,12 @@
   transform: scale(1.2);
   opacity: 1;
 }
+
+/* Past days: dimmed and hatched so they read as a record, not something to act on */
+.calendar-cell-past:not(.calendar-cell-selected) {
+  opacity: 0.55;
+  filter: grayscale(0.5);
+  background-image: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--ink-muted, #64748b) 10%, transparent) 6px 7px);
+  cursor: default;
+}
+.calendar-cell-past:hover:not(.calendar-cell-empty) { transform: none; box-shadow: none; }

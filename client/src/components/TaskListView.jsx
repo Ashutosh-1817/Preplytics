@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+import { isPastKey, displayStatus } from '../utils/calendarDays.js';
 import './TaskListView.css';
 
 const STATUS_PILL = {
@@ -16,18 +18,22 @@ function TaskListView({ tasksByDate, onToggle }) {
 
   return (
     <div className="task-list-view">
-      {sortedDates.map((date) => (
-        <div key={date} className="task-list-group">
+      {sortedDates.map((date) => {
+        const past = isPastKey(date);
+        return (
+        <div key={date} className={`task-list-group ${past ? 'task-list-past' : ''}`}>
           <h4 className="task-list-date text-muted">
             {new Date(date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })}
+            {past && <span className="past-tag">Past day · view only</span>}
           </h4>
           {tasksByDate[date].map((task) => {
-            const status = STATUS_PILL[task.status] || STATUS_PILL.planned;
+            const status = STATUS_PILL[displayStatus(task, date)] || STATUS_PILL.planned;
             return (
               <label key={task._id} className="task-list-row">
                 <input
                   type="checkbox"
                   checked={task.status === 'completed'}
+                  disabled={past}
                   onChange={() => onToggle(task._id, task.status)}
                 />
                 <div className="task-list-info">
@@ -36,6 +42,9 @@ function TaskListView({ tasksByDate, onToggle }) {
                     {[task.subjectTitle, task.chapterTitle].filter(Boolean).join(' › ')}
                   </span>
                 </div>
+                {past && task.status !== 'completed' && task.nodeId?._id && (
+                  <Link to={`/prephub/${task.nodeId._id}`} className="past-link" onClick={(e) => e.stopPropagation()}>Study now</Link>
+                )}
                 <span className={`pill ${status.className}`} style={{ background: 'var(--surface-raised)' }}>
                   {status.label}
                 </span>
@@ -43,7 +52,8 @@ function TaskListView({ tasksByDate, onToggle }) {
             );
           })}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

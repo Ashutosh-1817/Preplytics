@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { LEVELS, KINDS, PRIORITIES, MIN_TOPIC_MINUTES, MAX_BASE_MINUTES } from '../config/estimation.config.js';
 
 const roadmapNodeSchema = new mongoose.Schema(
   {
@@ -50,6 +51,22 @@ const roadmapNodeSchema = new mongoose.Schema(
       type: Number,
       min: 0,
       default: null,
+    },
+
+    // How estimatedMinutes was derived, kept so a later level change can
+    // re-scale it without another AI call. Absent on older nodes.
+    estimateMeta: {
+      type: new mongoose.Schema(
+        {
+          baseMinutes: { type: Number, min: MIN_TOPIC_MINUTES, max: MAX_BASE_MINUTES },
+          kind: { type: String, enum: KINDS },
+          priority: { type: String, enum: PRIORITIES },
+          level: { type: String, enum: LEVELS },
+          locked: { type: Boolean },
+        },
+        { _id: false }
+      ),
+      default: undefined,
     },
 
     // Only ever incremented via session-logging (Phase 6), never part

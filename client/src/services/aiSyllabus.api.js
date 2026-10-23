@@ -41,3 +41,16 @@ export const saveSubjectRoadmap = (goalId, nodeId, chapters) =>
 
 export const saveSubjectList = (goalId, subjects) =>
   api.post(`/goals/${goalId}/subject-list`, { subjects }).then((r) => r.data.data);
+
+
+
+export const estimateRoadmap = (goalId, payload) =>
+  api.post(`/goals/${goalId}/ai-syllabus/estimate`, payload, { timeout: 15000 }).then((r) => r.data.data);
+
+// ---------- Change level of a saved subject ----------
+
+export const previewRelevel = (goalId, nodeId, payload) =>
+  api.post(`/goals/${goalId}/nodes/${nodeId}/relevel/preview`, payload, { timeout: 15000 }).then((r) => r.data.data);
+
+export const applyRelevel = (goalId, nodeId, payload) =>
+  api.post(`/goals/${goalId}/nodes/${nodeId}/relevel`, payload, { timeout: 30000 }).then((r) => r.data.data);

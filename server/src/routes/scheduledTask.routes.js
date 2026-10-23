@@ -24,5 +24,6 @@ router.get('/goals/:goalId/schedule/calendar', validate(calendarQuerySchema, 'qu
 
 router.get('/tasks/today', getTodayTasks);
 router.patch('/tasks/:taskId/status', validate(updateTaskStatusSchema), updateTaskStatus);
+router.get('/goals/:goalId/schedule/catch-up', getCatchUp);
 
 export default router;

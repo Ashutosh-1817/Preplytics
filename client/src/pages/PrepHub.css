@@ -390,3 +390,179 @@
 @media (prefers-reduced-motion: reduce) {
   .ph-prepbot, .ph-prepbot::after { transition: none; }
 }
+
+
+/* ───────── Annotations ───────── */
+.ph-pdf { position: relative; }
+.ph-pdf-sheet { position: relative; margin: 0 auto; }
+.ph-pdf-sheet .react-pdf__Page { background: #fff; }
+
+.ph-ann-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.ph-ann-group { position: absolute; inset: 0; }
+.ph-ann { position: absolute; }
+.ph-ann-highlight .ph-ann { background: var(--ann-fill); mix-blend-mode: multiply; border-radius: 2px; }
+.ph-ann-underline .ph-ann { border-bottom: 2px solid var(--ann-solid); }
+.ph-ann-area .ph-ann {
+  background: var(--ann-fill); mix-blend-mode: multiply;
+  border: 2px solid var(--ann-solid); border-radius: 4px;
+}
+.ph-ann-dot {
+  position: absolute; width: 9px; height: 9px; margin: -4px 0 0 -2px; border-radius: 50%;
+  background: var(--ann-solid); box-shadow: 0 0 0 2px #fff, 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.ph-ann-draft {
+  position: absolute; border: 2px dashed var(--ann-solid); background: var(--ann-fill); border-radius: 4px;
+}
+.ph-pdf-dark .ph-ann-highlight .ph-ann,
+.ph-pdf-dark .ph-ann-area .ph-ann { mix-blend-mode: normal; opacity: 0.55; }
+
+/* Area mode: the page takes the mouse, the text layer steps aside */
+.ph-area-mode { cursor: crosshair; }
+.ph-area-mode .ph-pdf-sheet { touch-action: none; }
+.ph-area-mode .textLayer { pointer-events: none; }
+.ph-area-mode .textLayer :is(span, br) { cursor: crosshair; }
+.textLayer ::selection { background: rgba(79, 70, 229, 0.3); }
+
+/* Toolbar color picker */
+.ph-pal-wrap { position: relative; display: inline-flex; }
+.ph-tool-swatch { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgba(0, 0, 0, 0.25); }
+.ph-pal {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 30;
+  display: flex; gap: 8px; padding: 8px 10px;
+  background: var(--surface-raised); border: 1px solid var(--border);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-card-hover);
+}
+
+/* Floating selection menu and annotation editor (rendered in <body>) */
+.ph-selmenu, .ph-annpop {
+  position: fixed; z-index: 90;
+  background: var(--surface-raised); color: var(--ink);
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22), 0 2px 6px rgba(15, 23, 42, 0.12);
+  animation: ph-pop var(--duration-fast) var(--ease-standard);
+}
+.ph-selmenu { transform: translateX(-50%); padding: 6px 8px; }
+.ph-selmenu[style*='translate(-50%, -100%)'] { transform: translate(-50%, -100%); }
+@keyframes ph-pop { from { opacity: 0; scale: 0.96; } to { opacity: 1; scale: 1; } }
+
+.ph-selmenu-row { display: flex; align-items: center; gap: 6px; }
+.ph-selmenu-sep { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
+.ph-selmenu-dot {
+  width: 20px; height: 20px; padding: 0; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+.ph-selmenu-dot:hover { transform: scale(1.15); }
+.ph-selmenu-dot-on { border-color: var(--ink); }
+.ph-selmenu-btn {
+  display: grid; place-items: center; width: 28px; height: 28px; padding: 0;
+  border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--ink); cursor: pointer;
+}
+.ph-selmenu-btn:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+
+.ph-selmenu-compose { width: 300px; display: flex; flex-direction: column; gap: 8px; padding: 4px; }
+.ph-selmenu textarea, .ph-annpop textarea {
+  width: 100%; min-height: 64px; resize: vertical; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--surface); color: var(--ink); font: inherit; font-size: var(--text-sm);
+}
+.ph-selmenu textarea:focus, .ph-annpop textarea:focus { outline: 2px solid var(--signal); outline-offset: 1px; }
+.ph-selmenu-actions, .ph-annpop-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+.ph-annpop { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.ph-annpop-quote {
+  margin: 0; font-size: var(--text-xs); color: var(--ink-muted); font-style: italic;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ph-annpop-colors { display: flex; gap: 8px; }
+.ph-annpop-actions { justify-content: space-between; }
+.ph-annpop-delete { color: var(--alert); }
+
+.ph-pdf-toast {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 20;
+  display: flex; align-items: center; gap: 8px; margin: 0; padding: 8px 12px;
+  background: var(--surface-raised); color: var(--alert); font-size: var(--text-sm);
+  border: 1px solid var(--alert); border-radius: var(--radius-md); box-shadow: var(--shadow-card-hover);
+}
+@media (prefers-reduced-motion: reduce) { .ph-selmenu, .ph-annpop { animation: none; } }
+
+
+/* ───────── Find in PDF + annotations list ───────── */
+.ph-pdf-body { position: relative; flex: 1; min-height: 0; display: flex; }
+.ph-pdf-body > .ph-pdf-scroll { flex: 1; min-width: 0; }
+
+.ph-find {
+  position: absolute; top: 10px; right: 22px; z-index: 12;
+  display: flex; align-items: center; gap: 4px; padding: 4px 6px 4px 10px;
+  background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  animation: ph-pop var(--duration-fast) var(--ease-standard);
+}
+.ph-find-icon { color: var(--ink-muted); flex: none; }
+.ph-find input {
+  width: 190px; border: 0; background: transparent; color: var(--ink);
+  font: inherit; font-size: var(--text-sm); padding: 4px 4px; outline: none;
+}
+.ph-find-status {
+  display: inline-flex; align-items: center; gap: 4px; min-width: 64px; justify-content: flex-end;
+  font-size: var(--text-xs); color: var(--ink-muted); white-space: nowrap;
+}
+
+.ph-match { position: absolute; background: rgba(255, 170, 0, 0.38); border-radius: 2px; mix-blend-mode: multiply; }
+.ph-match-current { background: rgba(255, 120, 0, 0.55); outline: 2px solid rgba(255, 120, 0, 0.9); }
+.ph-pdf-dark .ph-match { mix-blend-mode: normal; opacity: 0.6; }
+
+.ph-ann-flash .ph-ann { animation: ph-flash 0.6s ease-in-out 3; }
+@keyframes ph-flash { 50% { outline: 3px solid var(--ann-solid); outline-offset: 2px; } }
+
+.ph-badge-btn { position: relative; }
+.ph-badge {
+  position: absolute; top: -3px; right: -4px; min-width: 15px; height: 15px; padding: 0 4px;
+  display: grid; place-items: center; border-radius: var(--radius-pill);
+  background: var(--signal); color: #fff; font-size: 9px; font-weight: 700; line-height: 1;
+}
+
+.ph-annpanel {
+  position: absolute; top: 0; right: 0; bottom: 0; z-index: 14; width: min(320px, 100%);
+  display: flex; flex-direction: column;
+  background: var(--surface-raised); border-left: 1px solid var(--border);
+  box-shadow: -12px 0 28px rgba(15, 23, 42, 0.12);
+  animation: ph-slide var(--duration-base) var(--ease-standard);
+}
+@keyframes ph-slide { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.ph-annpanel-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 6px 14px; }
+.ph-annpanel-head h3 { margin: 0; font-size: var(--text-sm); }
+.ph-annpanel-filters { display: flex; gap: 6px; padding: 0 12px 8px; border-bottom: 1px solid var(--border); }
+.ph-annpanel-filters button {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; cursor: pointer;
+  border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface);
+  color: var(--ink-muted); font: inherit; font-size: var(--text-xs);
+}
+.ph-annpanel-filters button span { font-weight: 700; }
+.ph-annpanel-filters .is-on { color: var(--ink); border-color: var(--signal); background: color-mix(in srgb, var(--signal) 10%, transparent); }
+.ph-annpanel-list { flex: 1; overflow-y: auto; padding: 8px 10px 16px; display: flex; flex-direction: column; gap: 10px; }
+.ph-annpanel-empty { margin: var(--space-4) 4px; color: var(--ink-muted); font-size: var(--text-sm); line-height: 1.5; }
+.ph-annpanel-group h4 { margin: 4px 4px 6px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); }
+
+.ph-annitem {
+  display: flex; align-items: flex-start; gap: 2px; margin-bottom: 6px;
+  border: 1px solid var(--border); border-left: 4px solid var(--ann-solid);
+  border-radius: var(--radius-md); background: var(--surface);
+}
+.ph-annitem:hover { border-color: var(--ink-muted); border-left-color: var(--ann-solid); }
+.ph-annitem-main {
+  flex: 1; min-width: 0; display: flex; gap: 8px; padding: 8px 4px 8px 8px;
+  border: 0; background: none; color: var(--ink); text-align: left; font: inherit; font-size: var(--text-xs); cursor: pointer;
+}
+.ph-annitem-icon { flex: none; margin-top: 2px; color: var(--ink-muted); }
+.ph-annitem-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; line-height: 1.4; }
+.ph-annitem-text > :first-child { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.ph-annitem-comment { display: flex; align-items: flex-start; gap: 4px; color: var(--ink-muted); }
+.ph-annitem-comment svg { flex: none; margin-top: 2px; }
+.ph-annitem-actions { display: flex; flex-direction: column; padding: 4px 2px; opacity: 0; transition: opacity var(--duration-fast); }
+.ph-annitem:hover .ph-annitem-actions, .ph-annitem:focus-within .ph-annitem-actions { opacity: 1; }
+@media (hover: none) { .ph-annitem-actions { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .ph-annpanel, .ph-find { animation: none; }
+  .ph-ann-flash .ph-ann { animation: none; outline: 3px solid var(--ann-solid); }
+}

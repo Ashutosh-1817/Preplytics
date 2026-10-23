@@ -24,6 +24,7 @@ import searchRoutes from './routes/search.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import wrappedRoutes from './routes/wrapped.routes.js';
 import prepHubRoutes from './routes/prephub.routes.js';
+import annotationRoutes from './routes/annotation.routes.js';
 
 const app = express();
 
@@ -73,6 +74,7 @@ app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/wrapped', wrappedRoutes);
 app.use('/api/v1/prephub', prepHubRoutes);
+app.use('/api/v1/annotations', annotationRoutes);
 
 // Anything that reaches this point matched no real route
 app.use(notFound);

@@ -11,13 +11,31 @@ import {
   generateSubjectBreakdown,
 } from '../services/aiSyllabus.service.js';
 import { enforceAiRateLimit } from '../services/rateLimit.service.js';
-import { generateSchedule, regenerateSchedule, assertCanSchedule } from '../services/scheduler.service.js';
+import {
+  generateSchedule,
+  regenerateSchedule,
+  assertCanSchedule,
+  getCapacityInfo,
+  MAX_DAILY_MINUTES,
+} from '../services/scheduler.service.js';
+import { planRoadmap } from '../services/estimation.service.js';
 import { getOwnedGoalOrFail } from './goal.controller.js';
 
 // ---------- Shared helpers ----------
 
 const sumChapterMinutes = (chapters) =>
   chapters.reduce((sum, ch) => sum + ch.subtopics.reduce((s, sub) => s + sub.estimatedMinutes, 0), 0);
+
+const buildEstimateMeta = (sub) =>
+  typeof sub.baseMinutes === 'number'
+    ? {
+        baseMinutes: sub.baseMinutes,
+        kind: sub.kind ?? undefined,
+        priority: sub.priority ?? undefined,
+        level: sub.level ?? undefined,
+        ...(sub.locked === true && { locked: true }),
+      }
+    : undefined;
 
 // Writes one subject with its chapters and subtopics.
 // `order` is the subject's position among the goal's top-level nodes.
@@ -37,13 +55,15 @@ const insertChapters = async (goal, parentNode, chapters) => {
   const subtopicDocs = [];
   chapters.forEach((ch, ci) => {
     const parentId = insertedChapters[ci]._id;
-    ch.subtopics.forEach((sub, si) => {
+      ch.subtopics.forEach((sub, si) => {
+      const estimateMeta = buildEstimateMeta(sub);
       subtopicDocs.push({
         goalId: goal._id,
         parentId,
         level: 3,
         title: sub.title,
         estimatedMinutes: sub.estimatedMinutes,
+        ...(estimateMeta && { estimateMeta }),
         isActionable: true,
         order: si,
       });
@@ -102,8 +122,8 @@ export const expandAiChapter = asyncHandler(async (req, res) => {
   const goal = await getOwnedGoalOrFail(req.params.goalId, req.user._id);
   await enforceAiRateLimit(req.user);
 
-  const { subject, chapterTitle, siblingChapters, context } = req.body;
-  const result = await generateChapterTopics(subject, goal.title, chapterTitle, siblingChapters, context);
+  const { subject, chapterTitle, siblingChapters, context, level } = req.body;
+  const result = await generateChapterTopics(subject, goal.title, chapterTitle, siblingChapters, context, level);
 
   res.status(200).json(new ApiResponse(200, result, 'Chapter topics generated'));
 });
@@ -125,10 +145,53 @@ export const expandAiSubject = asyncHandler(async (req, res) => {
   const goal = await getOwnedGoalOrFail(req.params.goalId, req.user._id);
   await enforceAiRateLimit(req.user);
 
-  const { subject, siblingSubjects, context } = req.body;
-  const result = await generateSubjectBreakdown(goal.title, subject, siblingSubjects, withOverviewHint(goal, context));
+  const { subject, siblingSubjects, context, level } = req.body;
+  const result = await generateSubjectBreakdown(
+    goal.title,
+    subject,
+    siblingSubjects,
+    withOverviewHint(goal, context),
+    level
+  );
 
   res.status(200).json(new ApiResponse(200, result, 'Subject breakdown generated'));
+});
+
+// ---------- POST /goals/:goalId/ai-syllabus/estimate ----------
+// Personalised time for a draft roadmap. Pure maths on what the client sends plus
+// the goal's deadline, daily time and learned efficiency: NO AI call, so it is
+// free to call on every level change and does not touch the daily AI limit.
+
+export const estimateRoadmapTime = asyncHandler(async (req, res) => {
+  const goal = await getOwnedGoalOrFail(req.params.goalId, req.user._id);
+  const { subjects, defaultLevel, restDaysPerWeek, subjectNodeId } = req.body;
+
+  const capacity = await getCapacityInfo(goal);
+
+  // Same rule the save endpoint applies: an empty subject that is about to receive
+  // these topics stops being a leaf, so its own placeholder time is not "existing" work.
+  let existingRemainingMinutes = capacity.existingRemainingMinutes;
+  if (capacity.hasDeadline && subjectNodeId) {
+    const subjectNode = await RoadmapNode.findOne({ _id: subjectNodeId, goalId: goal._id, level: 1 });
+    if (subjectNode && subjectNode.isActionable && subjectNode.status !== 'completed') {
+      existingRemainingMinutes = Math.max(0, existingRemainingMinutes - (subjectNode.estimatedMinutes || 30));
+    }
+  }
+
+  const constraints = capacity.hasDeadline
+    ? {
+        daysLeft: capacity.days,
+        dailyMinutes: goal.dailyAvailableMinutes,
+        efficiencyRatio: goal.efficiencyRatio,
+        restDaysPerWeek,
+        existingRemainingMinutes,
+        maxDailyMinutes: MAX_DAILY_MINUTES,
+      }
+    : null;
+
+  const plan = planRoadmap({ subjects, defaultLevel, constraints });
+
+  res.status(200).json(new ApiResponse(200, plan, 'Estimate calculated'));
 });
 
 // ---------- POST /goals/:goalId/bulk-nodes (one subject; unchanged behaviour) ----------

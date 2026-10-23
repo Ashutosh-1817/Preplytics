@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, SlidersHorizontal } from 'lucide-react';
 import './RoadmapTree.css';
 
 const STATUS_CLASS = {
@@ -22,6 +22,7 @@ function RoadmapTree({ nodes, onAddChild, onToggleComplete, onSelect, selectedNo
           selectedNodeId={selectedNodeId}
           onDelete={onDelete}
           onGenerateSubject={onGenerateSubject}
+          onChangeLevel={onChangeLevel}
         />
       ))}
     </ul>
@@ -93,6 +94,13 @@ function TreeNode({ node, onAddChild, onToggleComplete, onSelect, selectedNodeId
           </span>
         )}
 
+
+        {onChangeLevel && node.level < 3 && hasChildren && (
+            <button type="button" className="tree-add-btn" onClick={() => onChangeLevel(node)} title="Change how well you know this">
+              <SlidersHorizontal size={12} /> level
+            </button>
+        )}
+
         {node.level < 3 && (
           <button type="button" className="tree-add-btn" onClick={() => setShowAddInput((s) => !s)}>
             {addLabel}
@@ -131,6 +139,7 @@ function TreeNode({ node, onAddChild, onToggleComplete, onSelect, selectedNodeId
           selectedNodeId={selectedNodeId}
           onDelete={onDelete}
           onGenerateSubject={onGenerateSubject}
+          onChangeLevel={onChangeLevel}
         />
       )}
     </li>

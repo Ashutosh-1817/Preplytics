@@ -9,6 +9,7 @@ import { getOwnedGoalOrFail } from './goal.controller.js';
 import { generateSchedule, regenerateSchedule, getCapacityInfo } from '../services/scheduler.service.js';
 import { syncNodeFromTaskStatus } from '../services/statusSync.service.js';
 import dateOnly, { addDays } from '../utils/dateOnly.js';
+import { buildCatchUpPreview } from '../services/catchUp.service.js';
 
 // Walks each task's leaf node up to its chapter and subject, attaching
 // readable breadcrumb titles. Parent lookups are batched.
@@ -82,6 +83,37 @@ export const getGoalCapacity = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, info, 'Capacity fetched successfully'));
 });
 
+     // ---------- GET /goals/:goalId/schedule/catch-up ----------
+     // Topics scheduled on past days that were never completed, and what rescheduling
+     // them (POST /schedule/regenerate) would mean for the days that are left. Writes nothing.
+
+export const getCatchUp = asyncHandler(async (req, res) => {
+       const goal = await getOwnedGoalOrFail(req.params.goalId, req.user._id);
+
+       if (!goal.targetDate) {
+         return res.status(200).json(new ApiResponse(200, buildCatchUpPreview({ goal, tasks: [], remainingMinutes: 0 }), 'Catch-up fetched'));
+       }
+
+       const tasks = await ScheduledTask.find({
+         goalId: goal._id,
+         scheduledDate: { $lt: dateOnly(new Date()) },
+         status: { $in: ['planned', 'missed', 'pushed'] },
+       })
+         .populate('nodeId', 'title level parentId estimatedMinutes status')
+         .sort({ scheduledDate: 1 });
+
+       const withLineage = await attachLineage(tasks.filter((t) => t.nodeId));
+       const capacity = await getCapacityInfo(goal);
+
+       const preview = buildCatchUpPreview({
+         goal,
+         tasks: withLineage,
+         remainingMinutes: capacity.existingRemainingMinutes,
+       });
+
+       res.status(200).json(new ApiResponse(200, preview, 'Catch-up fetched'));
+});
+
 // ---------- GET /goals/:goalId/schedule/calendar ----------
 
 export const getGoalCalendar = asyncHandler(async (req, res) => {
@@ -126,6 +158,17 @@ export const updateTaskStatus = asyncHandler(async (req, res) => {
 
   if (!task) {
     throw new ApiError(404, ErrorCodes.NOT_FOUND, 'Scheduled task not found');
+  }
+
+       // Past days are view-only: what happened there is history. Unfinished topics are
+     // rescheduled with "Catch up", or finished from the roadmap / PrepHub (which also
+     // closes their old tasks).
+  if (dateOnly(task.scheduledDate).getTime() < dateOnly(new Date()).getTime()) {
+       throw new ApiError(
+         409,
+         ErrorCodes.VALIDATION_ERROR,
+         'Past days are view-only. Use Catch up to reschedule missed topics, or mark the topic complete from your roadmap.'
+       );
   }
 
   task.status = req.body.status;
