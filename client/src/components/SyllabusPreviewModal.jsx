@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Sparkles, ChevronUp, ChevronDown, Trash2, Plus, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
+import { ListTree, ChevronUp, ChevronDown, Trash2, Plus, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
 import { generateChapters, expandChapter, bulkInsertSyllabus, saveSubjectRoadmap } from '../services/aiSyllabus.api.js';
 import useRoadmapEstimate from '../hooks/useRoadmapEstimate.js';
 import { LevelPills, LevelSelect, FitModeToggle, PlanBanner, TopicRow ,FailedBanner} from './roadmap/RoadmapPlanParts.jsx';
@@ -238,11 +238,11 @@ function SyllabusPreviewModal({ goalId, subjectNode = null, onClose, onSaved }) 
 
   return (
     <div className="modal-backdrop" onClick={stage === STAGE.INPUT ? onClose : undefined}>
-      <div className="modal-panel syllabus-modal" onClick={(e) => e.stopPropagation()}>
+      <div className={`modal-panel syllabus-modal ${stage === STAGE.PREVIEW || stage === STAGE.SAVING ? 'syllabus-modal-wide' : ''}`} onClick={(e) => e.stopPropagation()}>
         {stage === STAGE.INPUT && (
           <form onSubmit={handleGenerate}>
             <h2 className="text-stat syllabus-title">
-              <Sparkles size={20} /> AI Generate Roadmap
+              <ListTree size={20} /> AI Generate Roadmap
             </h2>
             <p className="text-muted" style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-4)' }}>
               Enter a subject and we'll draft chapters first, then fill in each chapter's topics. You can edit

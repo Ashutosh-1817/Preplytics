@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import GoogleSignInButton from '../components/GoogleSignInButton.jsx';
 import './AuthForm.css';
 
 function Signup() {
-  const { signup } = useAuth();
+  const { signup, googleLogin } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -12,14 +13,29 @@ function Signup() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const handleGoogle = useCallback(
+    async (credential) => {
+      setError('');
+      try {
+        await googleLogin(credential);
+        navigate('/');
+      } catch (err) {
+        setError(err.response?.data?.error?.message || 'Google sign-in failed. Please try again.');
+      }
+    },
+    [googleLogin, navigate]
+  );
+
+  const handleGoogleError = useCallback((message) => setError(message), []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
 
     try {
-      await signup(name, email, password);
-      navigate('/');
+      const result = await signup(name, email, password);
+      navigate('/verify-email', { state: { email: result.email, emailSent: result.emailSent, waitSeconds: result.waitSeconds } });
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Signup failed. Please try again.');
     } finally {
@@ -53,6 +69,9 @@ function Signup() {
         <button type="submit" className="btn btn-primary" disabled={isSubmitting} style={{ width: '100%' }}>
           {isSubmitting ? 'Creating account…' : 'Sign up'}
         </button>
+
+        <div className="auth-divider"><span>or</span></div>
+        <GoogleSignInButton onCredential={handleGoogle} onError={handleGoogleError} text={'signup_with'} />
 
         <p className="text-muted" style={{ fontSize: 'var(--text-sm)', textAlign: 'center' }}>
           Already have an account? <Link to="/login" style={{ color: 'var(--signal)' }}>Log in</Link>

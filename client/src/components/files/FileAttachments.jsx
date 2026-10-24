@@ -1,7 +1,7 @@
 
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Paperclip, Plus, FileText, FileImage, Trash2, Loader2, AlertCircle, Sparkles } from 'lucide-react';
+import { Paperclip, Plus, FileText, FileImage, Trash2, Loader2, AlertCircle, FileCheck2 } from 'lucide-react';
 import { fetchFiles, deleteFile, downloadFileToDisk, getErrorMessage } from '../../services/files.api.js';
 import useFileUploads from '../../hooks/useFileUploads.js';
 import usePendingPoll from '../../hooks/usePendingPoll.js';
@@ -104,7 +104,7 @@ function FileAttachments({ nodeId = null, noteId = null, title = 'Files', compac
               <span className="fa-name">{f.fileName}</span>
               <span className="fa-meta">{formatFileSize(f.fileSize)}</span>
               {f.fileType === 'pdf' && f.extractionStatus === 'completed' && (
-                <Sparkles size={12} className="fa-ai" title="Ready for AI" />
+                <FileCheck2 size={12} className="fa-ai" title="Ready for AI" />
               )}
               {f.extractionStatus === 'pending' && <Loader2 size={12} className="spin" title="Reading text…" />}
             </button>

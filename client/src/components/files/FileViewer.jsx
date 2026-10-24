@@ -3,7 +3,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  X, Download, Sparkles, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2,
+  X, Download, MessageSquareText, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2,
   Loader2, AlertCircle, FileText, FileImage, RefreshCw,
 } from 'lucide-react';
 import { useAIDrawer } from '../../context/AIDrawerContext.jsx';
@@ -232,7 +232,7 @@ function FileViewer({ file, onClose }) {
                 disabled={!aiReady}
                 title={aiReady ? 'Ask AI about this page' : "The AI can't read this file"}
               >
-                <Sparkles size={16} /> <span>Ask AI</span>
+                <MessageSquareText size={16} /> <span>Ask AI</span>
               </button>
             )}
             <button className="fv-icon-btn" onClick={handleDownload} disabled={isDownloading} aria-label="Download" title="Download">

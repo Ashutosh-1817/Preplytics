@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Globe, Search, Sparkles, Copy, Check, FilePlus2, RefreshCw, AlertCircle, AlertTriangle,
+  Globe, Search, Lightbulb, Copy, Check, FilePlus2, RefreshCw, AlertCircle, AlertTriangle,
   Clock, Trash2, Newspaper, Zap, Loader2,
 } from 'lucide-react';
 import { fetchGoals } from '../services/goals.api.js';
@@ -383,7 +383,7 @@ function Research() {
             <div className="results">
               <div className="answer-card">
                 <div className="answer-head">
-                  <span className="answer-badge"><Sparkles size={15} /> Answer</span>
+                  <span className="answer-badge"><Lightbulb size={15} /> Answer</span>
                   <span className="answer-meta">
                     {entry.sources.length} sources · {cached ? `saved ${timeAgo(entry.createdAt)}` : 'just now'}
                   </span>

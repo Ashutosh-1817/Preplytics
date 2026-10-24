@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import {
-  FileText, FileImage, Eye, Download, Trash2, Sparkles, Target, Loader2, AlertCircle, RefreshCw,
+  FileText, FileImage, Eye, Download, Trash2, FileCheck2, MessageSquareText, Target, Loader2, AlertCircle, RefreshCw,
 } from 'lucide-react';
 import {
   formatFileSize, formatShortDate, thumbnailUrl, isStalePending, describeExtractionFailure,
@@ -25,7 +25,7 @@ function AiStatus({ file, onRetry }) {
   if (file.extractionStatus === 'completed') {
     return (
       <span className="file-chip file-chip-ok">
-        <Sparkles size={12} /> Ready for AI · {file.pageCount} {file.pageCount === 1 ? 'page' : 'pages'}
+        <FileCheck2 size={12} /> Ready for AI · {file.pageCount} {file.pageCount === 1 ? 'page' : 'pages'}
       </span>
     );
   }
@@ -120,7 +120,7 @@ function FileCard({ file, goalTitle, index = 0, onOpen, onAskAi, onDownload, onD
       <div className="file-card-actions">
         {canAskAi && (
           <button type="button" className="fx-icon-btn fx-icon-btn-ai" title="Ask AI about this file" onClick={() => onAskAi(file)}>
-            <Sparkles size={16} />
+            <MessageSquareText size={16} />
           </button>
         )}
         <button type="button" className="fx-icon-btn" title="Download" onClick={() => onDownload(file)}>

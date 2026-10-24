@@ -9,7 +9,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import './NoteEditor.css';
 import { createNoteExtensions } from './editor/noteExtensions.js';
 
-const TEXT_COLORS = ['#1E293B', '#6C5CE7', '#00CEC9', '#FF7675', '#F59E0B', '#10B981'];
+const TEXT_COLORS = ['#0D1B2A', '#415A77', '#2F7D5B', '#B3392F', '#B7791F', '#778DA9'];
 
 function NoteEditor({ content, onChange }) {
   const editor = useEditor({

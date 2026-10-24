@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Sparkles, ChevronUp, ChevronDown, Plus, X, RefreshCw, AlertCircle } from 'lucide-react';
+import { ListChecks, ChevronUp, ChevronDown, Plus, X, RefreshCw, AlertCircle } from 'lucide-react';
 import { generateSubjects, saveSubjectList } from '../services/aiSyllabus.api.js';
 import './SyllabusPreviewModal.css';
 
@@ -99,7 +99,7 @@ function GoalSubjectsModal({ goalId, goalTitle, onClose, onSaved }) {
         {stage === STAGE.LOADING && (
           <div className="syllabus-loading">
             <h2 className="text-stat syllabus-title">
-              <Sparkles size={20} /> Finding your subjects
+              <ListChecks size={20} /> Finding your subjects
             </h2>
             <div className="skeleton" style={{ height: 16, width: '90%', marginBottom: 8 }} />
             <div className="skeleton" style={{ height: 16, width: '80%', marginBottom: 8 }} />

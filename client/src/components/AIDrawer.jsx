@@ -7,7 +7,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import {
-  Sparkles, History, MessageSquarePlus, Minus, Maximize2, Minimize2, X, ArrowUp,
+  Bot, History, MessageSquarePlus, Minus, Maximize2, Minimize2, X, ArrowUp,
   AlignLeft, Lightbulb, FilePlus2, ListChecks, FileText, StickyNote, BookOpen, Copy, Check,
   ChevronLeft, MessageSquare, Paperclip,Trash2,
 } from 'lucide-react';
@@ -251,7 +251,7 @@ function AIDrawer() {
   if (viewMode === 'minimized') {
     return (
       <button className="ai-drawer-minimized" onClick={() => setViewMode('docked')}>
-        <Sparkles size={16} /> PrepBot
+        <Bot size={16} /> PrepBot
         {messages.length > 0 && <span className="ai-minimized-badge">{messages.length}</span>}
       </button>
     );
@@ -272,7 +272,7 @@ function AIDrawer() {
     <div className={`ai-drawer ai-drawer--${viewMode}`}>
       <div className="ai-header">
         <div className="ai-brand">
-          <div className="ai-brand-badge"><Sparkles size={18} /></div>
+          <div className="ai-brand-badge"><Bot size={18} /></div>
           <div className="ai-brand-text">
             <span className="ai-brand-title">PrepBot</span>
             {context.type !== 'none' ? (
@@ -414,7 +414,7 @@ function AIDrawer() {
           <div className="ai-messages" ref={scrollRef}>
             {messages.length === 0 && (
               <div className="ai-empty-state">
-                <div className="ai-empty-badge"><Sparkles size={22} /></div>
+                <div className="ai-empty-badge"><Bot size={22} /></div>
                 <h4>How can I help?</h4>
                 <p className="text-muted">{emptyCopy}</p>
               </div>
@@ -423,7 +423,7 @@ function AIDrawer() {
             {messages.map((msg, i) => (
               <div key={i} className={`ai-msg ai-msg-${msg.role}`}>
                 {msg.role === 'assistant' && (
-                  <div className="ai-avatar"><Sparkles size={14} /></div>
+                  <div className="ai-avatar"><Bot size={14} /></div>
                 )}
 
                 <div className="ai-msg-body">
@@ -464,7 +464,7 @@ function AIDrawer() {
 
             {isLoading && (
               <div className="ai-msg ai-msg-assistant">
-                <div className="ai-avatar"><Sparkles size={14} /></div>
+                <div className="ai-avatar"><Bot size={14} /></div>
                 <div className="ai-msg-body">
                   <div className="ai-bubble ai-typing"><span /><span /><span /></div>
                 </div>

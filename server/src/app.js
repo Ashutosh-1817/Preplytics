@@ -25,8 +25,12 @@ import analyticsRoutes from './routes/analytics.routes.js';
 import wrappedRoutes from './routes/wrapped.routes.js';
 import prepHubRoutes from './routes/prephub.routes.js';
 import annotationRoutes from './routes/annotation.routes.js';
+import profileRoutes from './routes/profile.routes.js';
 
 const app = express();
+
+// Behind a host's proxy (Render etc.) the real client IP comes from X-Forwarded-For; needed for rate limiting
+if (config.nodeEnv === 'production') app.set('trust proxy', 1);
 
 // Security headers — applied first, before anything else touches the request
 app.use(helmet());
@@ -75,6 +79,8 @@ app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/wrapped', wrappedRoutes);
 app.use('/api/v1/prephub', prepHubRoutes);
 app.use('/api/v1/annotations', annotationRoutes);
+app.use('/api/v1/profile', profileRoutes);
+
 
 // Anything that reaches this point matched no real route
 app.use(notFound);

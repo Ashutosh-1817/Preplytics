@@ -136,7 +136,7 @@ export const runRemindersForUser = async (user) => {
 const runDailyReminders = async () => {
   console.log('[REMINDER JOB] Starting daily reminder sweep...');
 
-  const users = await User.find({}).select('_id email emailNotificationsEnabled');
+  const users = await User.find({}).select('_id email emailNotificationsEnabled emailVerified');
 
   for (const user of users) {
     try {

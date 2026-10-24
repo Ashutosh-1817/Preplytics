@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, SlidersHorizontal } from 'lucide-react';
+import { Route, SlidersHorizontal } from 'lucide-react';
 import './RoadmapTree.css';
 
 const STATUS_CLASS = {
@@ -9,7 +9,7 @@ const STATUS_CLASS = {
   not_started: '',
 };
 
-function RoadmapTree({ nodes, onAddChild, onToggleComplete, onSelect, selectedNodeId, onDelete, onGenerateSubject }) {
+function RoadmapTree({ nodes, onAddChild, onToggleComplete, onSelect, selectedNodeId, onDelete, onGenerateSubject, onChangeLevel }) {
   return (
     <ul className="roadmap-tree">
       {nodes.map((node) => (
@@ -29,7 +29,7 @@ function RoadmapTree({ nodes, onAddChild, onToggleComplete, onSelect, selectedNo
   );
 }
 
-function TreeNode({ node, onAddChild, onToggleComplete, onSelect, selectedNodeId, onDelete, onGenerateSubject }) {
+function TreeNode({ node, onAddChild, onToggleComplete, onSelect, selectedNodeId, onDelete, onGenerateSubject, onChangeLevel }) {
   const hasChildren = node.children.length > 0;
   // Only top-level subjects with nothing under them offer AI generation
   const isEmptySubject = node.level === 1 && !hasChildren;
@@ -113,7 +113,7 @@ function TreeNode({ node, onAddChild, onToggleComplete, onSelect, selectedNodeId
       {isEmptySubject && expanded && (
         <div className="tree-generate">
           <button type="button" className="tree-generate-btn" onClick={() => onGenerateSubject(node)}>
-            <Sparkles size={13} /> Generate roadmap for this subject
+            <Route size={13} /> Generate roadmap for this subject
           </button>
         </div>
       )}

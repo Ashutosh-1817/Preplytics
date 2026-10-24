@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Sparkles, Play, Flame, ArrowUp, ArrowDown, Minus, Check, TrendingUp, RefreshCw,
+  Award, Flag, Lightbulb, BarChart3, Play, Flame, ArrowUp, ArrowDown, Minus, Check, TrendingUp, RefreshCw,
   Loader2, Download, Share2, RotateCcw, AlertCircle,
 } from 'lucide-react';
 import { formatDuration } from '../../utils/formatDuration.js';
@@ -84,7 +84,7 @@ export function IntroSlide({ d, onPlay }) {
         <Col>
           <Item>
             <span className="wr-kicker">
-              <Sparkles size={14} /> Preplytics Wrapped
+              <Award size={14} /> Preplytics Wrapped
             </span>
           </Item>
           <Item>
@@ -144,7 +144,7 @@ function MiniDaily({ daily }) {
 export function TimeSlide({ d }) {
   const t = d.totals;
   let chip;
-  if (t.deltaPercent === null) chip = { Icon: Sparkles, text: 'First tracked period', tone: 'neutral' };
+  if (t.deltaPercent === null) chip = { Icon: Flag, text: 'First tracked period', tone: 'neutral' };
   else if (t.deltaPercent > 0) chip = { Icon: ArrowUp, text: `${t.deltaPercent}% more than the previous ${d.period.days} days`, tone: 'up' };
   else if (t.deltaPercent < 0) chip = { Icon: ArrowDown, text: `${Math.abs(t.deltaPercent)}% less than the previous ${d.period.days} days`, tone: 'down' };
   else chip = { Icon: Minus, text: `Same as the previous ${d.period.days} days`, tone: 'neutral' };
@@ -485,10 +485,10 @@ export function VerdictSlide({ d, aiState, onRegenerate }) {
 
   let badge;
   if (loading) badge = { Icon: Loader2, text: 'Writing your insights…', spin: true };
-  else if (n.source === 'ai') badge = { Icon: Sparkles, text: 'AI insights from your stats' };
+  else if (n.source === 'ai') badge = { Icon: Lightbulb, text: 'AI insights from your stats' };
   else if (aiState === 'limit') badge = { Icon: AlertCircle, text: 'Daily AI limit reached · showing stat-based insights' };
   else if (aiState === 'failed') badge = { Icon: AlertCircle, text: 'AI unavailable · showing stat-based insights' };
-  else badge = { Icon: Sparkles, text: 'Based on your stats' };
+  else badge = { Icon: BarChart3, text: 'Based on your stats' };
 
   const canRetry = !loading && aiState !== 'limit' && (n.source === 'ai' || aiState === 'failed' || aiState === 'idle');
 

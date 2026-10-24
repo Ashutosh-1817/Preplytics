@@ -1,7 +1,7 @@
 
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Search, FileText, Upload, Loader2, AlertCircle, Sparkles, X } from 'lucide-react';
+import { Search, FileText, Upload, Loader2, AlertCircle, MessageSquareText, X } from 'lucide-react';
 import { fetchFiles, fetchFile, uploadFile, getErrorMessage } from '../../services/files.api.js';
 import { describeExtractionFailure, formatFileSize, validateFileForUpload } from '../../utils/fileHelpers.js';
 import './files.css';
@@ -92,7 +92,7 @@ function AttachFilePopover({ onSelect, onClose }) {
   return (
     <div className="attach-pop" ref={rootRef} role="dialog" aria-label="Attach a PDF">
       <div className="attach-pop-head">
-        <span><Sparkles size={14} /> Chat about a PDF</span>
+        <span><MessageSquareText size={14} /> Chat about a PDF</span>
         <button type="button" className="fx-icon-btn" onClick={onClose} aria-label="Close"><X size={15} /></button>
       </div>
 

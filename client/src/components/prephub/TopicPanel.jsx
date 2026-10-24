@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles, Loader2, CalendarDays, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MessageSquareText, Loader2, CalendarDays, Clock } from 'lucide-react';
 import { fetchSessions } from '../../services/sessions.api.js';
 import { formatDuration } from '../../utils/formatDuration.js';
 import { timeAgo } from '../../utils/timeAgo.js';
@@ -134,7 +134,7 @@ function TopicPanel({ boot, onStatusChange, onNavigate, onAskAi }) {
 
       <section className="ph-section">
         <button type="button" className="ph-prepbot" onClick={onAskAi}>
-            <span className="ph-prepbot-icon"><Sparkles size={16} /></span>
+            <span className="ph-prepbot-icon"><MessageSquareText size={16} /></span>
             <span className="ph-prepbot-text">
               <strong>PrepBot</strong>
               <small>Your study partner for this topic</small>

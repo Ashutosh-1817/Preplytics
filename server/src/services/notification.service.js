@@ -25,7 +25,7 @@ export const createNotification = async ({ user, type, goalId = null, nodeIds = 
     throw err;
   }
 
-  if (user.emailNotificationsEnabled) {
+  if (user.emailNotificationsEnabled && user.emailVerified) {
     await sendEmail({
       to: user.email,
       subject: 'Preplytics reminder',

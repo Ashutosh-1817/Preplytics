@@ -9,9 +9,12 @@ import Files from '../pages/Files.jsx';
 import CalendarPage from '../pages/Calendar.jsx';
 import Login from '../pages/Login.jsx';
 import Signup from '../pages/Signup.jsx';
+import VerifyEmail from '../pages/VerifyEmail.jsx';
+import ForgotPassword from '../pages/ForgotPassword.jsx';
 import Research from '../pages/Research.jsx';
 import Analytics from '../pages/Analytics.jsx';
 import Wrapped from '../pages/Wrapped.jsx';
+import Profile from '../pages/Profile.jsx';
 import PrepHubFrame from '../components/prephub/PrepHubFrame.jsx';
 import { lazy, Suspense } from 'react'; 
 const PrepHub = lazy(() => import('../pages/PrepHub.jsx'));
@@ -21,6 +24,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
       {/* Standalone Full-Screen PrepHub Arena */}
       <Route
@@ -52,6 +57,7 @@ function AppRoutes() {
         <Route path="/research" element={<Research />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/wrapped" element={<Wrapped />} />
+        <Route path="/profile" element={<Profile />} />
       </Route>
     </Routes>
   );

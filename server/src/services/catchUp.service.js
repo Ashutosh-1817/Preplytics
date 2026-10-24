@@ -18,7 +18,8 @@ const dayStart = (date) => {
 
 // tasks:           past, not-yet-completed tasks, each with a populated `nodeId` and lineage titles
 // remainingMinutes: total time of every incomplete topic (what a regenerate would place again)
-export const buildCatchUpPreview = ({ goal, tasks, remainingMinutes, today = new Date() }) => {
+// rescheduledNodeIds: topics that already have a planned task today or later (done by a catch-up)
+export const buildCatchUpPreview = ({ goal, tasks, remainingMinutes, today = new Date(), rescheduledNodeIds = new Set() }) => {
   if (!goal.targetDate) return { hasDeadline: false, missedCount: 0, missedMinutes: 0, missed: [] };
 
   const todayMs = dayStart(today);
@@ -27,6 +28,7 @@ export const buildCatchUpPreview = ({ goal, tasks, remainingMinutes, today = new
   for (const task of tasks) {
     const node = task.nodeId;
     if (!node || node.status === 'completed') continue;
+    if (rescheduledNodeIds.has(String(node._id))) continue;
     const dateMs = dayStart(task.scheduledDate);
     if (dateMs >= todayMs) continue;
 

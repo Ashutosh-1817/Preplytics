@@ -1,8 +1,6 @@
-
-
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Target, StickyNote, FolderOpen, Globe, CalendarDays, LogOut , TrendingUp , Sparkles} from 'lucide-react';
-import { useAuth } from '../context/AuthContext.jsx';
+import { LayoutDashboard, Target, StickyNote, FolderOpen, Globe, CalendarDays, TrendingUp, Award } from 'lucide-react';
+import UserMenu from '../components/UserMenu.jsx';
 import NotificationCenter from '../components/notifications/NotificationCenter.jsx';
 import './AppShell.css';
 
@@ -14,13 +12,10 @@ const NAV_ITEMS = [
   { to: '/research', label: 'Research', Icon: Globe },
   { to: '/calendar', label: 'Calendar', Icon: CalendarDays },
   { to: '/analytics', label: 'Analytics', Icon: TrendingUp },
-  { to: '/wrapped', label: 'Wrapped', Icon: Sparkles },
+  { to: '/wrapped', label: 'Wrapped', Icon: Award },
 ];
 
 function AppShell() {
-  const { user, logout } = useAuth();
-  const initial = (user?.name || '?').trim().charAt(0).toUpperCase();
-
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -42,16 +37,7 @@ function AppShell() {
           <NotificationCenter />
         </nav>
 
-        <div className="sidebar-user">
-          <div className="sidebar-avatar">{initial}</div>
-          <div className="sidebar-user-text">
-            <span className="sidebar-user-name">{user?.name}</span>
-            <span className="sidebar-user-email">{user?.email}</span>
-          </div>
-          <button type="button" className="sidebar-logout" onClick={logout} title="Log out" aria-label="Log out">
-            <LogOut size={17} />
-          </button>
-        </div>
+        <UserMenu />
       </aside>
 
       <main className="app-content">

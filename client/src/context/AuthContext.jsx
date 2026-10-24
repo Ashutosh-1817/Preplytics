@@ -26,12 +26,39 @@ export function AuthProvider({ children }) {
     return data.data.user;
   }, []);
 
-  const signup = useCallback(async (name, email, password) => {
-    const { data } = await api.post('/auth/signup', { name, email, password });
+  // "Continue with Google": the server verifies Google's token, then we get a normal session
+  const googleLogin = useCallback(async (credential) => {
+    const { data } = await api.post('/auth/google', { credential });
     setAccessToken(data.data.accessToken);
     setUser(data.data.user);
     return data.data.user;
   }, []);
+
+  // Signup no longer logs anyone in: it creates an unverified account and emails a code.
+  // Resolves with { needsVerification, email, emailSent, waitSeconds }.
+  const signup = useCallback(async (name, email, password) => {
+    const { data } = await api.post('/auth/signup', { name, email, password });
+    return data.data;
+  }, []);
+
+  // Entering the emailed code verifies the address AND starts the session
+  const verifyEmail = useCallback(async (email, code) => {
+    const { data } = await api.post('/auth/verify-email', { email, code });
+    setAccessToken(data.data.accessToken);
+    setUser(data.data.user);
+    return data.data.user;
+  }, []);
+
+  const resendCode = useCallback(async (email) => {
+    const { data } = await api.post('/auth/resend-code', { email });
+    return data.data;
+  }, []);
+
+  const forgotPassword = useCallback((email) => api.post('/auth/forgot-password', { email }), []);
+
+  const resetPassword = useCallback((email, code, password) => api.post('/auth/reset-password', { email, code, password }), []);
+
+  const updateUser = useCallback((patch) => setUser((u) => (u ? { ...u, ...patch } : u)), []);
 
   const logoutRequest = useCallback(async () => {
     try {
@@ -64,7 +91,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout: logoutRequest }}>
+    <AuthContext.Provider value={{ user, isLoading, login, googleLogin, signup, verifyEmail, resendCode, forgotPassword, resetPassword, updateUser, logout: logoutRequest }}>
       {children}
     </AuthContext.Provider>
   );

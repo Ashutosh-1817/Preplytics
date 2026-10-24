@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sparkles , Smartphone, Monitor  } from 'lucide-react';
+import { Award , Smartphone, Monitor  } from 'lucide-react';
 import { fetchGoals } from '../services/goals.api.js';
 import { fetchWrapped, generateWrappedNarrative } from '../services/wrapped.api.js';
 import StoryPlayer from '../components/wrapped/StoryPlayer.jsx';
@@ -150,7 +150,7 @@ function Wrapped() {
       <div className="wrapped-header">
         <div>
           <h1 className="text-stat wrapped-title">
-            <Sparkles size={22} /> Wrapped
+            <Award size={22} /> Wrapped
           </h1>
           <p className="text-muted wrapped-sub">Your study story, built from real sessions · {tz}</p>
         </div>
@@ -217,7 +217,7 @@ function Wrapped() {
 
       {data && !data.hasData && (
         <motion.div className="surface wrapped-empty" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <Sparkles size={28} />
+          <Award size={28} />
           <h3>Nothing to wrap yet</h3>
           <p className="text-muted">
             Start a study session on any topic, or complete a few topics, and your Wrapped will build itself from

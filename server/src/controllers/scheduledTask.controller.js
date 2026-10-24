@@ -88,30 +88,40 @@ export const getGoalCapacity = asyncHandler(async (req, res) => {
      // them (POST /schedule/regenerate) would mean for the days that are left. Writes nothing.
 
 export const getCatchUp = asyncHandler(async (req, res) => {
-       const goal = await getOwnedGoalOrFail(req.params.goalId, req.user._id);
+  const goal = await getOwnedGoalOrFail(req.params.goalId, req.user._id);
 
-       if (!goal.targetDate) {
-         return res.status(200).json(new ApiResponse(200, buildCatchUpPreview({ goal, tasks: [], remainingMinutes: 0 }), 'Catch-up fetched'));
-       }
+  if (!goal.targetDate) {
+    return res.status(200).json(new ApiResponse(200, buildCatchUpPreview({ goal, tasks: [], remainingMinutes: 0 }), 'Catch-up fetched'));
+  }
 
-       const tasks = await ScheduledTask.find({
-         goalId: goal._id,
-         scheduledDate: { $lt: dateOnly(new Date()) },
-         status: { $in: ['planned', 'missed', 'pushed'] },
-       })
-         .populate('nodeId', 'title level parentId estimatedMinutes status')
-         .sort({ scheduledDate: 1 });
+  const tasks = await ScheduledTask.find({
+    goalId: goal._id,
+    scheduledDate: { $lt: dateOnly(new Date()) },
+    status: { $in: ['planned', 'missed', 'pushed'] },
+  })
+    .populate('nodeId', 'title level parentId estimatedMinutes status')
+    .sort({ scheduledDate: 1 });
 
-       const withLineage = await attachLineage(tasks.filter((t) => t.nodeId));
-       const capacity = await getCapacityInfo(goal);
+  // Topics that already have a planned task today or later were rescheduled (Catch up),
+  // so they are no longer "missed"
+  const upcoming = await ScheduledTask.find({
+    goalId: goal._id,
+    scheduledDate: { $gte: dateOnly(new Date()) },
+    status: 'planned',
+  }).select('nodeId');
+  const rescheduledNodeIds = new Set(upcoming.map((t) => String(t.nodeId)));
 
-       const preview = buildCatchUpPreview({
-         goal,
-         tasks: withLineage,
-         remainingMinutes: capacity.existingRemainingMinutes,
-       });
+  const withLineage = await attachLineage(tasks.filter((t) => t.nodeId));
+  const capacity = await getCapacityInfo(goal);
 
-       res.status(200).json(new ApiResponse(200, preview, 'Catch-up fetched'));
+  const preview = buildCatchUpPreview({
+    goal,
+    tasks: withLineage,
+    remainingMinutes: capacity.existingRemainingMinutes,
+    rescheduledNodeIds,
+  });
+
+  res.status(200).json(new ApiResponse(200, preview, 'Catch-up fetched'));
 });
 
 // ---------- GET /goals/:goalId/schedule/calendar ----------

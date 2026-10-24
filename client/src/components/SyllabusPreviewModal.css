@@ -154,7 +154,7 @@
 .syllabus-progress-fill {
   height: 100%;
   border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, var(--signal), var(--highlight));
+  background: var(--signal);
   transition: width var(--duration-base) var(--ease-standard);
 }
 
@@ -362,3 +362,37 @@
 .rp-failed-actions { display: flex; gap: var(--space-2); flex-shrink: 0; }
 .rp-cancel-btn { display: inline-flex; align-items: center; gap: 4px; background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 10px; font-size: var(--text-xs); cursor: pointer; color: var(--ink); }
 .rp-cancel-btn:hover { background: var(--surface-raised); }
+
+/* ---------- Roomier topic list: shrink everything ABOVE it, grow the list ---------- */
+.syllabus-modal.syllabus-modal-wide {
+  width: min(1240px, 97vw);
+  max-width: min(1240px, 97vw);
+  height: 97vh;
+  max-height: 97vh;
+  padding: var(--space-4) var(--space-5);
+  gap: var(--space-2);
+  overflow-y: auto;
+}
+.syllabus-modal-wide .syllabus-title { font-size: var(--text-lg); margin: 0; }
+.syllabus-modal-wide .rp-levels-title { font-size: var(--text-xs); }
+.syllabus-modal-wide .rp-hint { display: none; }
+.syllabus-modal-wide .capacity-banner { padding: var(--space-2) var(--space-3); margin: 0; }
+.syllabus-modal-wide .capacity-meter { display: none; }
+.syllabus-modal-wide .capacity-stats { margin-top: 2px; }
+.syllabus-modal-wide > .syllabus-chapters {
+  flex: 1 0 auto;
+  min-height: 55vh;
+  overflow-y: auto;
+}
+.syllabus-modal-wide .syllabus-chapter { padding: var(--space-3); }
+.syllabus-modal-wide .syllabus-subtopic-row { gap: var(--space-2); }
+.syllabus-modal-wide .rp-topic { margin-bottom: var(--space-2); }
+/* the Cancel / Confirm row stays visible */
+.syllabus-modal-wide > div:last-child {
+  position: sticky;
+  bottom: calc(var(--space-4) * -1);
+  background: var(--surface, #fff);
+  padding: var(--space-2) 0;
+  margin-top: 0 !important;
+  z-index: 2;
+}

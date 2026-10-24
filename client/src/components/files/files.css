@@ -56,9 +56,7 @@
   padding: var(--space-6) var(--space-8);
   border: 2px dashed var(--border);
   border-radius: var(--radius-lg);
-  background: linear-gradient(135deg,
-    color-mix(in srgb, var(--signal) 4%, var(--surface)),
-    color-mix(in srgb, var(--highlight) 4%, var(--surface)));
+  background: color-mix(in srgb, var(--signal) 4%, var(--surface));
   cursor: pointer;
   transition: border-color var(--duration-base) var(--ease-standard),
               background var(--duration-base) var(--ease-standard),
@@ -84,7 +82,7 @@
   align-items: center;
   justify-content: center;
   color: #fff;
-  background: linear-gradient(135deg, var(--signal), var(--highlight));
+  background: var(--signal);
   box-shadow: 0 10px 24px -8px color-mix(in srgb, var(--signal) 55%, transparent);
   transition: transform var(--duration-base) var(--ease-standard);
 }
@@ -141,7 +139,7 @@
 .upload-bar-fill {
   height: 100%;
   border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, var(--signal), var(--highlight));
+  background: var(--signal);
   transition: width 200ms var(--ease-standard);
 }
 .upload-item-done .upload-bar-fill { background: var(--success); }
@@ -185,9 +183,7 @@
   justify-content: center;
   gap: var(--space-2);
   color: var(--tone);
-  background: linear-gradient(135deg,
-    color-mix(in srgb, var(--tone) 16%, var(--surface)),
-    color-mix(in srgb, var(--tone) 5%, var(--surface)));
+  background: color-mix(in srgb, var(--tone) 10%, var(--surface));
 }
 .file-card-ext {
   font-family: var(--font-stat);
@@ -353,7 +349,7 @@
   color: #fff;
   font-size: var(--text-sm);
   font-weight: 600;
-  background: linear-gradient(135deg, var(--signal), var(--highlight));
+  background: var(--signal);
   box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--signal) 60%, transparent);
   transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
@@ -381,7 +377,7 @@
 .fv-skeleton {
   max-width: 100%;
   border-radius: 4px;
-  background: linear-gradient(90deg, var(--surface) 25%, var(--border) 50%, var(--surface) 75%);
+  background: var(--signal) 25%, var(--border) 50%, var(--surface) 75%);
   background-size: 200% 100%;
   animation: fv-shimmer 1.4s ease-in-out infinite;
 }

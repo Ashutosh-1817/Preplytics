@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+import { MessageSquareText } from 'lucide-react';
 import { useAIDrawer } from '../context/AIDrawerContext.jsx';
 import './AIDrawerToggle.css';
 
@@ -9,7 +9,7 @@ function AIDrawerToggle() {
 
   return (
     <button className="ai-drawer-toggle" onClick={toggleDrawer} title="PrepBot" aria-label="Open AI assistant">
-      <Sparkles size={24} />
+      <MessageSquareText size={24} />
     </button>
   );
 }

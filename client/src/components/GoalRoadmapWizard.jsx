@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Sparkles, Loader2, AlertCircle, RefreshCw, Trash2, ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { Route, Loader2, AlertCircle, RefreshCw, Trash2, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { generateSubjects, expandSubject, bulkInsertGoalSyllabus } from '../services/aiSyllabus.api.js';
 import useRoadmapEstimate from '../hooks/useRoadmapEstimate.js';
-import { LevelPills, LevelSelect, FitModeToggle, PlanBanner, TopicRow , failedBanner} from './roadmap/RoadmapPlanParts.jsx';
+import { LevelPills, LevelSelect, FitModeToggle, PlanBanner, TopicRow, FailedBanner } from './roadmap/RoadmapPlanParts.jsx';
 import {
   DEFAULT_LEVEL,
   LIMITS,
@@ -236,7 +236,7 @@ function GoalRoadmapWizard({ goalId, goalTitle, onClose, onSaved }) {
         <div className={`modal-panel syllabus-modal ${stage === STAGE.PREVIEW || stage === STAGE.SAVING ? 'syllabus-modal-wide' : ''}`} onClick={(e) => e.stopPropagation()}>
         {stage === STAGE.LOADING && (
           <div className="syllabus-loading">
-            <h2 className="text-stat syllabus-title"><Sparkles size={20} /> Building your roadmap</h2>
+            <h2 className="text-stat syllabus-title"><Route size={20} /> Building your roadmap</h2>
             <p className="text-muted" style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-4)' }}>
               Outlining the core subjects for “{goalTitle}”…
             </p>

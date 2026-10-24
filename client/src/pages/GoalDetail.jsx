@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { Sparkles, CalendarPlus, RefreshCw, Pencil, CalendarDays, Clock ,BookOpen} from 'lucide-react';
+import { ListChecks, CalendarPlus, RefreshCw, Pencil, CalendarDays, Clock ,BookOpen} from 'lucide-react';
 import {
   fetchGoal,
   fetchRoadmapTree,
@@ -270,7 +270,7 @@ const handleSubjectsSaved = async (result) => {
               </ol>
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-4)', flexWrap: 'wrap' }}>
                 <button className="btn btn-primary" onClick={() => setShowSubjectsModal(true)}>
-                  <Sparkles size={16} /> Generate subjects 
+                  <ListChecks size={16} /> Generate subjects 
                </button>
                 <span className="text-muted" style={{ fontSize: 'var(--text-sm)' }}>or add your first subject below</span>
               </div>

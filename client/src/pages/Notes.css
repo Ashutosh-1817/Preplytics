@@ -25,7 +25,7 @@
 }
 
 .notes-sidebar:hover {
-  border-color: color-mix(in srgb, var(--signal, #6366f1) 20%, var(--border-subtle, #e2e8f0));
+  border-color: color-mix(in srgb, var(--signal, #415A77) 20%, var(--border-subtle, #e2e8f0));
 }
 
 .notes-list {
@@ -55,13 +55,13 @@
 }
 
 .notes-list-item-active {
-  background: color-mix(in srgb, var(--signal, #6366f1) 8%, var(--surface-card, #ffffff));
-  border-color: color-mix(in srgb, var(--signal, #6366f1) 35%, transparent);
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.06);
+  background: color-mix(in srgb, var(--signal, #415A77) 8%, var(--surface-card, #ffffff));
+  border-color: color-mix(in srgb, var(--signal, #415A77) 35%, transparent);
+  box-shadow: 0 2px 8px rgba(65, 90, 119, 0.06);
 }
 
 .notes-list-item-active:hover {
-  background: color-mix(in srgb, var(--signal, #6366f1) 12%, var(--surface-card, #ffffff));
+  background: color-mix(in srgb, var(--signal, #415A77) 12%, var(--surface-card, #ffffff));
   transform: none;
 }
 
@@ -87,7 +87,7 @@
 
 .notes-list-item-active .notes-list-title {
   font-weight: 600;
-  color: var(--signal, #6366f1);
+  color: var(--signal, #415A77);
 }
 
 .notes-list-delete {
@@ -131,7 +131,7 @@
 }
 
 .notes-main:hover {
-  border-color: color-mix(in srgb, var(--signal, #6366f1) 20%, var(--border-subtle, #e2e8f0));
+  border-color: color-mix(in srgb, var(--signal, #415A77) 20%, var(--border-subtle, #e2e8f0));
 }
 
 .notes-main-header {

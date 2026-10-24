@@ -4,6 +4,7 @@ import app from './src/app.js';
 import config from './src/config/env.js';
 import connectDB from './src/config/db.js';
 import { startReminderJob } from './src/jobs/reminder.job.js';
+import { verifyEmailSetup } from './src/services/email.service.js';
 
 
 const startServer = async () => {
@@ -14,6 +15,7 @@ const startServer = async () => {
   });
 
   startReminderJob();
+  verifyEmailSetup();
 };
 
 startServer();

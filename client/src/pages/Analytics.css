@@ -56,7 +56,7 @@
 .an-eff-top { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
 .an-eff-value { font-size: var(--text-3xl); color: var(--signal); line-height: 1; }
 .an-eff-verdict { flex: 1; min-width: 200px; font-size: var(--text-sm); }
-.an-meter { position: relative; height: 8px; border-radius: var(--radius-pill); margin-top: var(--space-4); background: linear-gradient(90deg, var(--alert), var(--warm) 40%, var(--success)); }
+.an-meter { position: relative; height: 8px; border-radius: var(--radius-pill); margin-top: var(--space-4); background: var(--signal), var(--warm) 40%, var(--success)); }
 .an-meter-one { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); opacity: 0.5; }
 .an-meter-marker { position: absolute; top: -4px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--surface); border: 3px solid var(--signal); }
 .an-meter-scale { display: flex; justify-content: space-between; font-size: var(--text-xs); margin-top: 6px; }

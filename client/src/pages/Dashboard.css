@@ -69,7 +69,7 @@
 .kpi-skeleton { 
   height: 104px; 
   border-radius: var(--radius-lg, 16px);
-  background: linear-gradient(90deg, var(--surface-raised, #f1f5f9) 25%, var(--border-subtle, #f8fafc) 50%, var(--surface-raised, #f1f5f9) 75%);
+  background: var(--signal) 25%, var(--border-subtle, #f8fafc) 50%, var(--surface-raised, #f1f5f9) 75%);
   background-size: 200% 100%;
   animation: kpi-pulse 1.5s infinite ease-in-out;
 }
@@ -97,12 +97,12 @@
 .kpi-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
-  border-color: color-mix(in srgb, var(--tone, var(--signal, #6366f1)) 30%, var(--border-subtle, #e2e8f0));
+  border-color: color-mix(in srgb, var(--tone, var(--signal, #415A77)) 30%, var(--border-subtle, #e2e8f0));
 }
 
 .kpi-tone-warm { --tone: var(--warm, #f59e0b); }
-.kpi-tone-signal { --tone: var(--signal, #6366f1); }
-.kpi-tone-highlight { --tone: var(--highlight, #8b5cf6); }
+.kpi-tone-signal { --tone: var(--signal, #415A77); }
+.kpi-tone-highlight { --tone: var(--highlight, #778DA9); }
 
 .kpi-icon-badge {
   width: 48px;
@@ -214,8 +214,8 @@
 
 .goal-widget:hover {
   transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--goal-accent, var(--signal, #6366f1)) 40%, var(--border-subtle, #e2e8f0));
-  box-shadow: 0 12px 28px -6px rgba(99, 102, 241, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.02);
+  border-color: color-mix(in srgb, var(--goal-accent, var(--signal, #415A77)) 40%, var(--border-subtle, #e2e8f0));
+  box-shadow: 0 12px 28px -6px rgba(65, 90, 119, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.02);
 }
 
 .goal-widget-head { 
@@ -228,8 +228,8 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--goal-accent, #6366f1);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--goal-accent, #6366f1) 20%, transparent);
+  background: var(--goal-accent, #415A77);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--goal-accent, #415A77) 20%, transparent);
   flex-shrink: 0;
 }
 
@@ -251,7 +251,7 @@
 
 .goal-widget:hover .goal-widget-arrow { 
   transform: translateX(4px); 
-  color: var(--goal-accent, #6366f1); 
+  color: var(--goal-accent, #415A77); 
 }
 
 .goal-widget-stat { 
@@ -285,7 +285,7 @@
 .goal-bar-fill {
   height: 100%;
   border-radius: var(--radius-pill, 9999px);
-  background: linear-gradient(90deg, var(--goal-accent, #6366f1), color-mix(in srgb, var(--goal-accent, #6366f1) 55%, var(--highlight, #8b5cf6)));
+  background: var(--goal-accent, var(--signal));
   animation: bar-grow 900ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -351,23 +351,23 @@
 }
 
 .filter-pill:hover { 
-  border-color: color-mix(in srgb, var(--signal, #6366f1) 40%, var(--border, #e2e8f0)); 
-  color: var(--signal, #6366f1); 
+  border-color: color-mix(in srgb, var(--signal, #415A77) 40%, var(--border, #e2e8f0)); 
+  color: var(--signal, #415A77); 
   transform: translateY(-1px); 
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+  box-shadow: 0 2px 8px rgba(65, 90, 119, 0.08);
 }
 
 .filter-pill-active { 
-  background: var(--signal, #6366f1); 
-  border-color: var(--signal, #6366f1); 
+  background: var(--signal, #415A77); 
+  border-color: var(--signal, #415A77); 
   color: #ffffff; 
-  box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--signal, #6366f1) 40%, transparent);
+  box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--signal, #415A77) 40%, transparent);
 }
 
 .filter-pill-active:hover { 
   color: #ffffff; 
-  background: color-mix(in srgb, var(--signal, #6366f1) 90%, #000);
-  border-color: color-mix(in srgb, var(--signal, #6366f1) 90%, #000);
+  background: color-mix(in srgb, var(--signal, #415A77) 90%, #000);
+  border-color: color-mix(in srgb, var(--signal, #415A77) 90%, #000);
 }
 
 /* ---------- Today's plan task cards ---------- */
@@ -396,7 +396,7 @@
 .task-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-  border-color: color-mix(in srgb, var(--task-color, var(--signal, #6366f1)) 45%, var(--border, #e2e8f0));
+  border-color: color-mix(in srgb, var(--task-color, var(--signal, #415A77)) 45%, var(--border, #e2e8f0));
 }
 
 .task-card-bar { 
@@ -405,12 +405,12 @@
   top: 0; 
   bottom: 0; 
   width: 4px; 
-  background: var(--task-color, var(--signal, #6366f1)); 
+  background: var(--task-color, var(--signal, #415A77)); 
   border-radius: 4px 0 0 4px;
 }
 
-.task-card-planned { --task-color: var(--signal, #6366f1); }
-.task-card-progress { --task-color: var(--highlight, #8b5cf6); }
+.task-card-planned { --task-color: var(--signal, #415A77); }
+.task-card-progress { --task-color: var(--highlight, #778DA9); }
 .task-card-done { --task-color: var(--success, #10b981); }
 .task-card-missed { --task-color: var(--alert, #ef4444); }
 .task-card-pushed { --task-color: var(--warm, #f59e0b); }
@@ -471,9 +471,9 @@
   font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
   white-space: nowrap;
-  color: var(--task-color, var(--signal, #6366f1));
-  background: color-mix(in srgb, var(--task-color, var(--signal, #6366f1)) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--task-color, var(--signal, #6366f1)) 18%, transparent);
+  color: var(--task-color, var(--signal, #415A77));
+  background: color-mix(in srgb, var(--task-color, var(--signal, #415A77)) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--task-color, var(--signal, #415A77)) 18%, transparent);
 }
 
 .task-start-btn {
@@ -482,25 +482,25 @@
   gap: 6px;
   padding: 8px 16px;
   border-radius: var(--radius-pill, 9999px);
-  background: var(--signal, #6366f1);
+  background: var(--signal, #415A77);
   color: #ffffff;
   font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--signal, #6366f1) 45%, transparent);
+  box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--signal, #415A77) 45%, transparent);
   transition: background var(--duration-fast, 0.15s) ease, transform var(--duration-fast, 0.15s) ease, box-shadow var(--duration-fast, 0.15s) ease;
 }
 
 .task-start-btn:hover:not(:disabled) { 
-  background: var(--signal-hover, #4f46e5); 
+  background: var(--signal-hover, #1B263B); 
   transform: translateY(-1px); 
-  box-shadow: 0 6px 16px -2px color-mix(in srgb, var(--signal, #6366f1) 55%, transparent);
+  box-shadow: 0 6px 16px -2px color-mix(in srgb, var(--signal, #415A77) 55%, transparent);
 }
 
 .task-start-btn:active:not(:disabled) { 
   transform: scale(0.96); 
-  box-shadow: 0 2px 6px -1px color-mix(in srgb, var(--signal, #6366f1) 40%, transparent);
+  box-shadow: 0 2px 6px -1px color-mix(in srgb, var(--signal, #415A77) 40%, transparent);
 }
 
 .task-start-btn:disabled { 
@@ -551,7 +551,7 @@
 .week-bar {
   width: 100%;
   border-radius: 8px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--signal, #6366f1) 55%, var(--highlight, #8b5cf6)), var(--signal, #6366f1));
+  background: var(--signal, #415A77);
   opacity: 0.75;
   transform-origin: bottom;
   animation: bar-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
@@ -560,7 +560,7 @@
 
 .week-bar-today { 
   opacity: 1; 
-  box-shadow: 0 0 12px color-mix(in srgb, var(--signal, #6366f1) 40%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--signal, #415A77) 40%, transparent);
 }
 
 .week-bar-col:hover .week-bar { 
@@ -579,7 +579,7 @@
 }
 
 .week-bar-label-today { 
-  color: var(--signal, #6366f1); 
+  color: var(--signal, #415A77); 
   font-weight: 700; 
 }
 

@@ -56,8 +56,8 @@
 }
 
 .sidebar-link-active {
-  background: color-mix(in srgb, var(--signal, #6366f1) 10%, var(--surface-card, #ffffff));
-  color: var(--signal, #6366f1);
+  background: color-mix(in srgb, var(--signal, #415A77) 10%, var(--surface-card, #ffffff));
+  color: var(--signal, #415A77);
   font-weight: 600;
 }
 
@@ -100,7 +100,7 @@
   font-family: var(--font-stat, system-ui, sans-serif);
   font-weight: 700;
   color: #ffffff;
-  background: linear-gradient(135deg, var(--signal, #6366f1), var(--highlight, #8b5cf6));
+  background: var(--signal);
 }
 
 .sidebar-user-text {
