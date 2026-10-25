@@ -24,10 +24,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--signal, #415A77);
-  background: color-mix(in srgb, var(--signal, #415A77) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--signal, #415A77) 20%, transparent);
-  box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--signal, #415A77) 15%, transparent);
+  color: var(--signal, #262626);
+  background: color-mix(in srgb, var(--signal, #262626) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--signal, #262626) 20%, transparent);
+  box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--signal, #262626) 15%, transparent);
   flex-shrink: 0;
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -49,7 +49,7 @@
 .files-dropzone-container {
   padding: 32px 40px;
   border-radius: var(--radius-lg, 16px);
-  border: 2px dashed color-mix(in srgb, var(--signal, #415A77) 30%, var(--border, #e2e8f0));
+  border: 2px dashed color-mix(in srgb, var(--signal, #262626) 30%, var(--border, #e2e8f0));
   background: var(--surface-subtle, rgba(248, 250, 252, 0.6));
   backdrop-filter: blur(8px);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -58,9 +58,9 @@
 
 .file-dropzone:hover,
 .files-dropzone-container:hover {
-  border-color: var(--signal, #415A77);
-  background: color-mix(in srgb, var(--signal, #415A77) 4%, var(--surface, #ffffff));
-  box-shadow: 0 8px 24px -6px rgba(65, 90, 119, 0.08);
+  border-color: var(--signal, #262626);
+  background: color-mix(in srgb, var(--signal, #262626) 4%, var(--surface, #ffffff));
+  box-shadow: 0 8px 24px -6px rgba(11, 18, 32, 0.08);
 }
 
 /* ---------- Toolbar & Controls ---------- */
@@ -97,23 +97,23 @@
 }
 
 .files-pill:hover { 
-  border-color: color-mix(in srgb, var(--signal, #415A77) 40%, var(--border, #e2e8f0)); 
-  color: var(--signal, #415A77); 
+  border-color: color-mix(in srgb, var(--signal, #262626) 40%, var(--border, #e2e8f0)); 
+  color: var(--signal, #262626); 
   transform: translateY(-1px); 
-  box-shadow: 0 2px 8px rgba(65, 90, 119, 0.08);
+  box-shadow: 0 2px 8px rgba(11, 18, 32, 0.08);
 }
 
 .files-pill-active { 
-  background: var(--signal, #415A77); 
-  border-color: var(--signal, #415A77); 
+  background: var(--signal, #262626); 
+  border-color: var(--signal, #262626); 
   color: #ffffff; 
-  box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--signal, #415A77) 40%, transparent);
+  box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--signal, #262626) 40%, transparent);
 }
 
 .files-pill-active:hover { 
   color: #ffffff; 
-  background: color-mix(in srgb, var(--signal, #415A77) 90%, #000);
-  border-color: color-mix(in srgb, var(--signal, #415A77) 90%, #000);
+  background: color-mix(in srgb, var(--signal, #262626) 90%, #000);
+  border-color: color-mix(in srgb, var(--signal, #262626) 90%, #000);
 }
 
 .files-pill-count {
@@ -171,13 +171,13 @@
 .files-search input:focus { 
   outline: none; 
   width: 300px; 
-  border-color: var(--signal, #415A77); 
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal, #415A77) 15%, transparent); 
+  border-color: var(--signal, #262626); 
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal, #262626) 15%, transparent); 
 }
 
 .files-search input:focus + svg,
 .files-search:focus-within > svg {
-  color: var(--signal, #415A77);
+  color: var(--signal, #262626);
 }
 
 .files-search-clear { 
@@ -221,13 +221,13 @@
 }
 
 .files-select:hover {
-  border-color: color-mix(in srgb, var(--signal, #415A77) 40%, var(--border, #e2e8f0));
+  border-color: color-mix(in srgb, var(--signal, #262626) 40%, var(--border, #e2e8f0));
 }
 
 .files-select:focus { 
   outline: none; 
-  border-color: var(--signal, #415A77); 
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal, #415A77) 15%, transparent);
+  border-color: var(--signal, #262626); 
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal, #262626) 15%, transparent);
 }
 
 /* ---------- Files Grid ---------- */
@@ -259,10 +259,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--signal, #415A77);
-  background: color-mix(in srgb, var(--signal, #415A77) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--signal, #415A77) 18%, transparent);
-  box-shadow: 0 4px 16px -4px color-mix(in srgb, var(--signal, #415A77) 20%, transparent);
+  color: var(--signal, #262626);
+  background: color-mix(in srgb, var(--signal, #262626) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--signal, #262626) 18%, transparent);
+  box-shadow: 0 4px 16px -4px color-mix(in srgb, var(--signal, #262626) 20%, transparent);
 }
 
 .files-empty h3 { 

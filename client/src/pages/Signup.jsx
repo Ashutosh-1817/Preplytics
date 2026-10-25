@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import GoogleSignInButton from '../components/GoogleSignInButton.jsx';
 import './AuthForm.css';
+import AuthAside from '../components/AuthAside.jsx';
 
 function Signup() {
   const { signup, googleLogin } = useAuth();
@@ -45,6 +46,7 @@ function Signup() {
 
   return (
     <div className="auth-page">
+      <AuthAside />
       <form className="auth-form surface" onSubmit={handleSubmit}>
         <div className="auth-brand">Preplytics</div>
         <h1 className="text-stat" style={{ fontSize: 'var(--text-xl)' }}>Create your account</h1>

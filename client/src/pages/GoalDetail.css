@@ -25,8 +25,8 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--goal-accent, var(--signal, #415A77));
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--goal-accent, var(--signal, #415A77)) 18%, transparent);
+  background: var(--goal-accent, var(--signal, #262626));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--goal-accent, var(--signal, #262626)) 18%, transparent);
   flex-shrink: 0;
 }
 
@@ -57,7 +57,7 @@
 
 .goal-edit-btn:hover { 
   background: var(--surface-raised, #f1f5f9); 
-  color: var(--signal, #415A77); 
+  color: var(--signal, #262626); 
   border-color: var(--border-subtle, rgba(226, 232, 240, 0.8));
   transform: translateY(-1px);
 }
@@ -110,7 +110,7 @@
 }
 
 .roadmap-panel:hover {
-  border-color: color-mix(in srgb, var(--signal, #415A77) 25%, var(--border-subtle, #e2e8f0));
+  border-color: color-mix(in srgb, var(--signal, #262626) 25%, var(--border-subtle, #e2e8f0));
 }
 
 .roadmap-panel-header {
@@ -138,8 +138,8 @@
 }
 
 .roadmap-add-subject .auth-input:focus {
-  border-color: var(--signal, #415A77);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal, #415A77) 15%, transparent);
+  border-color: var(--signal, #262626);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal, #262626) 15%, transparent);
   outline: none;
 }
 
@@ -157,7 +157,7 @@
 }
 
 .node-detail-panel:hover {
-  border-color: color-mix(in srgb, var(--signal, #415A77) 25%, var(--border-subtle, #e2e8f0));
+  border-color: color-mix(in srgb, var(--signal, #262626) 25%, var(--border-subtle, #e2e8f0));
 }
 
 /* ---------- Responsive ---------- */

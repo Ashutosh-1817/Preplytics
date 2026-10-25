@@ -1,0 +1,48 @@
+.ai-drawer-toggle {
+  position: fixed;
+  bottom: var(--space-8, 32px);
+  right: var(--space-8, 32px);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--signal);
+  color: #ffffff;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  
+  /* Multi-layered shadow: one for colored glow, one for physical depth */
+  box-shadow: 0 8px 24px -4px color-mix(in srgb, var(--signal, #415A77) 45%, transparent), 
+              0 3px 8px -2px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+  
+  /* Snappy, spring-like transition matching the drawer */
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-drawer-toggle:hover {
+  /* Lift and expand slightly */
+  transform: scale(1.06) translateY(-2px);
+  /* Intensify the glow and depth */
+  box-shadow: 0 14px 28px -4px color-mix(in srgb, var(--signal, #415A77) 55%, transparent), 
+              0 6px 14px -2px rgba(0, 0, 0, 0.15);
+}
+
+.ai-drawer-toggle:active {
+  /* Tactile press effect */
+  transform: scale(0.94) translateY(0);
+  box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--signal, #415A77) 35%, transparent), 
+              0 2px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Accessibility focus ring */
+.ai-drawer-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--signal, #415A77) 25%, transparent),
+              0 8px 24px -4px color-mix(in srgb, var(--signal, #415A77) 45%, transparent);
+}

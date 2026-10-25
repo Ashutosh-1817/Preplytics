@@ -4,15 +4,30 @@ import UserMenu from '../components/UserMenu.jsx';
 import NotificationCenter from '../components/notifications/NotificationCenter.jsx';
 import './AppShell.css';
 
-const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', Icon: LayoutDashboard },
-  { to: '/goals', label: 'Goals', Icon: Target },
-  { to: '/notes', label: 'Notes', Icon: StickyNote },
-  { to: '/files', label: 'Files', Icon: FolderOpen },
-  { to: '/research', label: 'Research', Icon: Globe },
-  { to: '/calendar', label: 'Calendar', Icon: CalendarDays },
-  { to: '/analytics', label: 'Analytics', Icon: TrendingUp },
-  { to: '/wrapped', label: 'Wrapped', Icon: Award },
+const NAV_GROUPS = [
+  {
+    label: 'Workspace',
+    items: [
+      { to: '/', label: 'Dashboard', Icon: LayoutDashboard },
+      { to: '/goals', label: 'Goals', Icon: Target },
+      { to: '/notes', label: 'Notes', Icon: StickyNote },
+      { to: '/files', label: 'Files', Icon: FolderOpen },
+    ],
+  },
+  {
+    label: 'Explore',
+    items: [
+      { to: '/research', label: 'Research', Icon: Globe },
+      { to: '/calendar', label: 'Calendar', Icon: CalendarDays },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
+      { to: '/analytics', label: 'Analytics', Icon: TrendingUp },
+      { to: '/wrapped', label: 'Wrapped', Icon: Award },
+    ],
+  },
 ];
 
 function AppShell() {
@@ -22,16 +37,21 @@ function AppShell() {
         <div className="sidebar-brand">Preplytics</div>
 
         <nav className="sidebar-nav">
-          {NAV_ITEMS.map(({ to, label, Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) => `sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
-            >
-              <span className="sidebar-icon"><Icon size={18} strokeWidth={2} /></span>
-              <span className="sidebar-label">{label}</span>
-            </NavLink>
+          {NAV_GROUPS.map((group) => (
+            <div className="sidebar-group" key={group.label}>
+              <div className="sidebar-group-label">{group.label}</div>
+              {group.items.map(({ to, label, Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={to === '/'}
+                  className={({ isActive }) => `sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
+                >
+                  <span className="sidebar-icon"><Icon size={18} strokeWidth={2} /></span>
+                  <span className="sidebar-label">{label}</span>
+                </NavLink>
+              ))}
+            </div>
           ))}
 
           <NotificationCenter />

@@ -1,0 +1,267 @@
+/* src/styles/global.css */
+
+/* ---------- Design tokens — light mode is now the default ---------- */
+:root {
+  /* Palette: Modern SaaS Minimalist (Crisp Slate #F8FAFC, Pure White #FFFFFF, Deep Charcoal #0F172A, Vibrant Indigo #2563EB). No gradients, no glow. */
+  --bg-base: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface-raised: #F1F5F9;
+  --surface-card: #FFFFFF;
+  --surface-subtle: #F8FAFC;
+  --ink: #0F172A;
+  --ink-muted: #475569;
+  --border: #CBD5E1;
+  --border-subtle: #E2E8F0;
+
+  --signal: #2563EB;        /* Vibrant Indigo: primary */
+  --signal-hover: #1D4ED8;  /* Darker Indigo */
+  --highlight: #7C3AED;     /* Violet secondary accent */
+  --alert: #DC2626;         /* Rich red */
+
+  --amber: #DC2626;
+  --clay: #DC2626;
+  --success: #16A34A;
+  --warm: #D97706;
+
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-stat: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5625rem;
+  --text-2xl: 2rem;
+  --text-3xl: 2.5rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
+
+  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-card-hover: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+
+  --glass-bg: #FFFFFF;
+  --glass-blur: 0px;
+  --glass-border: #CBD5E1;
+}
+
+[data-theme="dark"] {
+  --bg-base: #090D16;
+  --surface: #111827;
+  --surface-raised: #1F2937;
+  --surface-card: #111827;
+  --surface-subtle: #0F172A;
+  --ink: #F8FAFC;
+  --ink-muted: #94A3B8;
+  --border: #334155;
+  --border-subtle: #1E293B;
+
+  --signal: #3B82F6;
+  --signal-hover: #60A5FA;
+  --highlight: #A78BFA;
+  --alert: #EF4444;
+  --success: #22C55E;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+
+  --glass-bg: #111827;
+  --glass-border: #334155;
+}
+
+/* ---------- Reset ---------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--ink);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard);
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---------- Typography utilities ---------- */
+.text-stat {
+  font-family: var(--font-stat);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.text-muted {
+  color: var(--ink-muted);
+}
+
+/* ---------- Shared component primitives ---------- */
+
+.surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--duration-base) var(--ease-standard),
+              transform var(--duration-base) var(--ease-standard);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: opacity var(--duration-fast) var(--ease-standard),
+              transform var(--duration-fast) var(--ease-standard),
+              background var(--duration-fast) var(--ease-standard);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--signal);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--signal-hover);
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--ink);
+}
+
+.btn-ghost:hover {
+  border-color: var(--signal);
+  color: var(--signal);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.status-complete { color: var(--signal); }
+.status-behind { color: var(--alert); }
+.status-missed { color: var(--alert); }
+.status-highlight { color: var(--highlight); }
+
+/* ---------- Glass effect — AI drawer ---------- */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-left: 1px solid var(--glass-border);
+}
+
+/* ---------- Motion ---------- */
+.drawer-enter { transform: translateX(100%); }
+.drawer-enter-active { transform: translateX(0); transition: transform var(--duration-slow) var(--ease-standard); }
+.drawer-exit-active { transform: translateX(100%); transition: transform var(--duration-slow) var(--ease-standard); }
+
+@keyframes streak-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.streak-pulse { animation: streak-pulse 420ms var(--ease-standard); }
+
+@keyframes check-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.check-pop { animation: check-pop 260ms var(--ease-standard); }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: var(--signal) 25%, var(--border) 50%, var(--surface-raised) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --text-3xl: 2rem;
+    --text-2xl: 1.5rem;
+  }
+}

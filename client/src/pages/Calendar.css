@@ -42,7 +42,7 @@
 
 .view-toggle-active {
   background: var(--surface, #ffffff);
-  color: var(--signal, #415A77);
+  color: var(--signal, #262626);
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 }
@@ -63,12 +63,12 @@
 }
 
 .goal-select:hover {
-  border-color: color-mix(in srgb, var(--signal, #415A77) 40%, var(--border, #e2e8f0));
+  border-color: color-mix(in srgb, var(--signal, #262626) 40%, var(--border, #e2e8f0));
 }
 
 .goal-select:focus {
-  border-color: var(--signal, #415A77);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal, #415A77) 15%, transparent);
+  border-color: var(--signal, #262626);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal, #262626) 15%, transparent);
 }
 
 /* ---------- Body & Layout ---------- */
@@ -91,7 +91,7 @@
 }
 
 .calendar-panel:hover {
-  border-color: color-mix(in srgb, var(--signal, #415A77) 25%, var(--border-subtle, #e2e8f0));
+  border-color: color-mix(in srgb, var(--signal, #262626) 25%, var(--border-subtle, #e2e8f0));
 }
 
 .calendar-nav {
@@ -119,7 +119,7 @@
 }
 
 .calendar-day-panel:hover {
-  border-color: color-mix(in srgb, var(--signal, #415A77) 25%, var(--border-subtle, #e2e8f0));
+  border-color: color-mix(in srgb, var(--signal, #262626) 25%, var(--border-subtle, #e2e8f0));
 }
 
 .panel-header {
@@ -154,12 +154,12 @@
 .task-card-item:hover {
   background: var(--surface, #ffffff);
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--signal, #415A77) 30%, var(--border, #e2e8f0));
+  border-color: color-mix(in srgb, var(--signal, #262626) 30%, var(--border, #e2e8f0));
   box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05);
 }
 
 .task-card-item input {
-  accent-color: var(--signal, #415A77);
+  accent-color: var(--signal, #262626);
   width: 18px;
   height: 18px;
   border-radius: 4px;
@@ -222,5 +222,5 @@
 .task-card-past { opacity: 0.7; cursor: default; }
 .task-card-past input { cursor: not-allowed; }
 .task-card-past:hover { transform: none; box-shadow: none; }
-.past-link { font-size: var(--text-xs, 0.75rem); font-weight: 600; color: var(--signal, #415A77); text-decoration: none; white-space: nowrap; }
+.past-link { font-size: var(--text-xs, 0.75rem); font-weight: 600; color: var(--signal, #262626); text-decoration: none; white-space: nowrap; }
 .past-link:hover { text-decoration: underline; }

@@ -36,7 +36,7 @@
 }
 .user-menu-trigger:hover,
 .user-menu-trigger[aria-expanded='true'] {
-  border-color: var(--signal, #415A77);
+  border-color: var(--signal, #262626);
 }
 
 .user-menu-text {

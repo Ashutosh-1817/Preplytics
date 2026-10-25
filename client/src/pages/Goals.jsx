@@ -1,8 +1,8 @@
-// src/pages/Goals.jsx
-// FULL FILE — replace everything currently in this file with this.
+
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Trash2, AlertTriangle } from 'lucide-react';
 import { fetchGoals, deleteGoal } from '../services/goals.api.js';
 import CreateGoalModal from '../components/CreateGoalModal.jsx';
 import './Goals.css';
@@ -22,8 +22,6 @@ function Goals() {
     setShowModal(false);
     navigate(`/goals/${goal._id}`);
   };
-
-  
 
   const handleDeleteGoal = async (goalId, e) => {
     e.stopPropagation();
@@ -62,7 +60,7 @@ function Goals() {
             onClick={() => navigate(`/goals/${goal._id}`)}
           >
             <button className="goal-card-delete" onClick={(e) => handleDeleteGoal(goal._id, e)} title="Delete goal">
-              🗑
+              <Trash2 size={16} />
             </button>
 
             <span className="goal-dot" style={{ background: goal.color }} />
@@ -72,7 +70,7 @@ function Goals() {
               <span className="text-muted" style={{ fontSize: 'var(--text-xs)' }}>
                 {goal.targetDate ? `Due ${new Date(goal.targetDate).toLocaleDateString()}` : 'Open-ended'}
               </span>
-              {goal.isOverloaded && <span className="goal-overload-badge">⚠ Overloaded</span>}
+              {goal.isOverloaded && <span className="goal-overload-badge"><AlertTriangle size={12} /> Overloaded</span>}
             </div>
           </div>
         ))}

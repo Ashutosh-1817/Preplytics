@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { createNoteExtensions } from '../editor/noteExtensions.js';
 
-const TEXT_COLORS = ['#415A77', '#2F7D5B', '#B3392F', '#B7791F', '#778DA9'];
+const TEXT_COLORS = ['#0A0A0A', '#3F7A4F', '#B3382C', '#B07B2A', '#6B6B68'];
 const HIGHLIGHTS = ['#FDE68A', '#A7F3D0', '#FBCFE8'];
 
 // onMouseDown preventDefault keeps the text selection while clicking a button

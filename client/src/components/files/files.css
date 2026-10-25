@@ -377,7 +377,7 @@
 .fv-skeleton {
   max-width: 100%;
   border-radius: 4px;
-  background: var(--signal) 25%, var(--border) 50%, var(--surface) 75%);
+  background: linear-gradient(90deg, var(--surface) 25%, var(--border) 50%, var(--surface) 75%);
   background-size: 200% 100%;
   animation: fv-shimmer 1.4s ease-in-out infinite;
 }

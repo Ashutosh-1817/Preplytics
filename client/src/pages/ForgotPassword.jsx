@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import './AuthForm.css';
+import AuthAside from '../components/AuthAside.jsx';
 
 const messageOf = (err, fallback) => err.response?.data?.error?.message || fallback;
 
@@ -47,6 +48,7 @@ function ForgotPassword() {
 
   return (
     <div className="auth-page">
+      <AuthAside />
       {step === 'email' ? (
         <form className="auth-form surface" onSubmit={requestCode}>
           <div className="auth-brand">Preplytics</div>

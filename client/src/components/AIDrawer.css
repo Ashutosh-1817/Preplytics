@@ -54,13 +54,13 @@
   letter-spacing: -0.01em;
   border: none;
   cursor: pointer;
-  box-shadow: 0 8px 24px -4px color-mix(in srgb, var(--signal, #415A77) 45%, transparent), 0 2px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px -4px color-mix(in srgb, var(--signal, #262626) 45%, transparent), 0 2px 6px -1px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
 }
 
 .ai-drawer-minimized:hover { 
   transform: translateY(-2px) scale(1.02); 
-  box-shadow: 0 12px 28px -4px color-mix(in srgb, var(--signal, #415A77) 55%, transparent), 0 4px 10px -2px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 28px -4px color-mix(in srgb, var(--signal, #262626) 55%, transparent), 0 4px 10px -2px rgba(0, 0, 0, 0.12);
 }
 
 .ai-minimized-badge {
@@ -101,7 +101,7 @@
   justify-content: center;
   color: #ffffff;
   background: var(--signal);
-  box-shadow: 0 4px 14px -3px color-mix(in srgb, var(--signal, #415A77) 45%, transparent);
+  box-shadow: 0 4px 14px -3px color-mix(in srgb, var(--signal, #262626) 45%, transparent);
 }
 
 .ai-brand-text { 
@@ -136,9 +136,9 @@
   border-radius: var(--radius-pill, 9999px);
   font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
-  color: var(--signal, #415A77);
-  background: color-mix(in srgb, var(--signal, #415A77) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--signal, #415A77) 18%, transparent);
+  color: var(--signal, #262626);
+  background: color-mix(in srgb, var(--signal, #262626) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--signal, #262626) 18%, transparent);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -175,8 +175,8 @@
 }
 
 .ai-icon-btn-active { 
-  background: color-mix(in srgb, var(--signal, #415A77) 12%, transparent); 
-  color: var(--signal, #415A77); 
+  background: color-mix(in srgb, var(--signal, #262626) 12%, transparent); 
+  color: var(--signal, #262626); 
 }
 
 /* ---------- Quick actions ---------- */
@@ -208,11 +208,11 @@
 }
 
 .ai-chip-btn:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--signal, #415A77) 40%, var(--border, #e2e8f0));
-  color: var(--signal, #415A77);
-  background: color-mix(in srgb, var(--signal, #415A77) 6%, var(--surface, #ffffff));
+  border-color: color-mix(in srgb, var(--signal, #262626) 40%, var(--border, #e2e8f0));
+  color: var(--signal, #262626);
+  background: color-mix(in srgb, var(--signal, #262626) 6%, var(--surface, #ffffff));
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(65, 90, 119, 0.06);
+  box-shadow: 0 2px 6px rgba(11, 18, 32, 0.06);
 }
 
 .ai-chip-btn:active:not(:disabled) { 
@@ -276,10 +276,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--signal, #415A77);
-  background: color-mix(in srgb, var(--signal, #415A77) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--signal, #415A77) 18%, transparent);
-  box-shadow: 0 4px 16px -4px color-mix(in srgb, var(--signal, #415A77) 20%, transparent);
+  color: var(--signal, #262626);
+  background: color-mix(in srgb, var(--signal, #262626) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--signal, #262626) 18%, transparent);
+  box-shadow: 0 4px 16px -4px color-mix(in srgb, var(--signal, #262626) 20%, transparent);
 }
 
 .ai-msg { 
@@ -309,7 +309,7 @@
   justify-content: center;
   color: #ffffff;
   background: var(--signal);
-  box-shadow: 0 2px 8px rgba(65, 90, 119, 0.25);
+  box-shadow: 0 2px 8px rgba(11, 18, 32, 0.25);
   margin-top: 2px;
 }
 
@@ -346,7 +346,7 @@
   color: #ffffff;
   border-top-right-radius: 4px;
   white-space: pre-wrap;
-  box-shadow: 0 3px 10px -2px color-mix(in srgb, var(--signal, #415A77) 35%, transparent);
+  box-shadow: 0 3px 10px -2px color-mix(in srgb, var(--signal, #262626) 35%, transparent);
 }
 
 .ai-msg-actions {
@@ -378,7 +378,7 @@
 
 .ai-action-btn:hover:not(:disabled) { 
   background: var(--surface-raised, #f1f5f9); 
-  color: var(--signal, #415A77); 
+  color: var(--signal, #262626); 
   border-color: var(--border-subtle, rgba(226, 232, 240, 0.6));
 }
 
@@ -400,7 +400,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--signal, #415A77);
+  background: var(--signal, #262626);
   animation: typing-bounce 1.2s infinite ease-in-out;
 }
 
@@ -443,7 +443,7 @@
   padding: 2px 7px;
   border-radius: 6px;
   background: var(--surface-raised, #f1f5f9);
-  color: var(--signal, #415A77);
+  color: var(--signal, #262626);
   font-size: 0.85em;
   font-family: monospace;
   border: 1px solid var(--border-subtle, rgba(226, 232, 240, 0.8));
@@ -469,7 +469,7 @@
 .ai-markdown blockquote {
   margin: 0 0 var(--space-3, 12px);
   padding-left: var(--space-4, 16px);
-  border-left: 3px solid var(--signal, #415A77);
+  border-left: 3px solid var(--signal, #262626);
   color: var(--ink-muted, #64748b);
   font-style: italic;
 }
@@ -528,8 +528,8 @@
 }
 
 .ai-composer-box:focus-within {
-  border-color: var(--signal, #415A77);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal, #415A77) 15%, transparent);
+  border-color: var(--signal, #262626);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal, #262626) 15%, transparent);
 }
 
 .ai-composer-box textarea {
@@ -561,14 +561,14 @@
   color: #ffffff;
   border: none;
   background: var(--signal);
-  box-shadow: 0 3px 10px -2px color-mix(in srgb, var(--signal, #415A77) 45%, transparent);
+  box-shadow: 0 3px 10px -2px color-mix(in srgb, var(--signal, #262626) 45%, transparent);
   cursor: pointer;
   transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease, box-shadow 0.15s ease;
 }
 
 .ai-send-btn:hover:not(:disabled) { 
   transform: scale(1.08); 
-  box-shadow: 0 5px 14px -2px color-mix(in srgb, var(--signal, #415A77) 60%, transparent);
+  box-shadow: 0 5px 14px -2px color-mix(in srgb, var(--signal, #262626) 60%, transparent);
 }
 
 .ai-send-btn:active:not(:disabled) { 
@@ -613,7 +613,7 @@
 }
 
 .ai-history-back:hover { 
-  color: var(--signal, #415A77); 
+  color: var(--signal, #262626); 
 }
 
 .ai-history-heading { 
@@ -652,7 +652,7 @@
 }
 
 .ai-history-icon { 
-  color: var(--signal, #415A77); 
+  color: var(--signal, #262626); 
   flex-shrink: 0; 
 }
 
@@ -705,8 +705,8 @@
 
 .ai-attach-btn:hover,
 .ai-attach-btn-active { 
-  background: color-mix(in srgb, var(--signal, #415A77) 12%, transparent); 
-  color: var(--signal, #415A77); 
+  background: color-mix(in srgb, var(--signal, #262626) 12%, transparent); 
+  color: var(--signal, #262626); 
 }
 
 .ai-attach-btn:active { 
@@ -727,9 +727,9 @@
   border-radius: var(--radius-pill, 9999px);
   font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
-  color: var(--signal, #415A77);
-  background: color-mix(in srgb, var(--signal, #415A77) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--signal, #415A77) 18%, transparent);
+  color: var(--signal, #262626);
+  background: color-mix(in srgb, var(--signal, #262626) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--signal, #262626) 18%, transparent);
 }
 
 .ai-attached-name { 
@@ -743,7 +743,7 @@
   padding: 2px 8px;
   border-radius: var(--radius-pill, 9999px);
   font-weight: 700;
-  background: color-mix(in srgb, var(--signal, #415A77) 18%, transparent);
+  background: color-mix(in srgb, var(--signal, #262626) 18%, transparent);
 }
 
 .ai-attached-chip button {
@@ -756,12 +756,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--signal, #415A77);
+  color: var(--signal, #262626);
   transition: background 0.15s ease;
 }
 
 .ai-attached-chip button:hover { 
-  background: color-mix(in srgb, var(--signal, #415A77) 22%, transparent); 
+  background: color-mix(in srgb, var(--signal, #262626) 22%, transparent); 
 }
 
 /* ---------- PDF scope: header chip parts, toggle, truncation note ---------- */
@@ -786,7 +786,7 @@
   flex-shrink: 0;
   padding: 0 6px;
   border-radius: var(--radius-pill, 9999px);
-  background: color-mix(in srgb, var(--signal, #415A77) 18%, transparent);
+  background: color-mix(in srgb, var(--signal, #262626) 18%, transparent);
   font-weight: 700;
 }
 
@@ -804,8 +804,8 @@
 }
 
 .ai-scope-toggle:hover {
-  color: var(--signal, #415A77);
-  border-color: var(--signal, #415A77);
+  color: var(--signal, #262626);
+  border-color: var(--signal, #262626);
 }
 
 .ai-context-note {

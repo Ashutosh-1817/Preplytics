@@ -56,8 +56,8 @@
 }
 
 .sidebar-link-active {
-  background: color-mix(in srgb, var(--signal, #415A77) 10%, var(--surface-card, #ffffff));
-  color: var(--signal, #415A77);
+  background: color-mix(in srgb, var(--signal, #262626) 10%, var(--surface-card, #ffffff));
+  color: var(--signal, #262626);
   font-weight: 600;
 }
 

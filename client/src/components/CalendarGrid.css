@@ -34,7 +34,7 @@
 }
 
 .calendar-cell:hover:not(.calendar-cell-empty) {
-  border-color: color-mix(in srgb, var(--signal, #415A77) 40%, var(--border, #e2e8f0));
+  border-color: color-mix(in srgb, var(--signal, #262626) 40%, var(--border, #e2e8f0));
   background: var(--surface-subtle, #f8fafc);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05);
@@ -52,25 +52,25 @@
 }
 
 .calendar-cell-today {
-  border-color: var(--signal, #415A77);
+  border-color: var(--signal, #262626);
   border-width: 2px;
-  background: color-mix(in srgb, var(--signal, #415A77) 4%, var(--surface, #ffffff));
+  background: color-mix(in srgb, var(--signal, #262626) 4%, var(--surface, #ffffff));
 }
 
 .calendar-cell-today .calendar-date {
-  color: var(--signal, #415A77);
+  color: var(--signal, #262626);
   font-weight: 700;
 }
 
 .calendar-cell-selected {
-  background: color-mix(in srgb, var(--signal, #415A77) 10%, var(--surface, #ffffff));
-  border-color: var(--signal, #415A77);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--signal, #415A77) 20%, transparent);
+  background: color-mix(in srgb, var(--signal, #262626) 10%, var(--surface, #ffffff));
+  border-color: var(--signal, #262626);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--signal, #262626) 20%, transparent);
 }
 
 .calendar-cell-done {
-  background: color-mix(in srgb, var(--signal, #415A77) 12%, var(--surface, #ffffff));
-  border-color: color-mix(in srgb, var(--signal, #415A77) 25%, transparent);
+  background: color-mix(in srgb, var(--signal, #262626) 12%, var(--surface, #ffffff));
+  border-color: color-mix(in srgb, var(--signal, #262626) 25%, transparent);
 }
 
 .calendar-date {
@@ -93,7 +93,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--signal, #415A77);
+  background: var(--signal, #262626);
   opacity: 0.85;
   transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease;
 }
@@ -107,7 +107,7 @@
 .calendar-cell-past:not(.calendar-cell-selected) {
   opacity: 0.55;
   filter: grayscale(0.5);
-  background-image: repeating-var(--signal) 10%, transparent) 6px 7px);
+  background-image: repeating-linear-gradient(45deg, transparent 0 6px, color-mix(in srgb, var(--ink-muted) 10%, transparent) 6px 7px);
   cursor: default;
 }
 .calendar-cell-past:hover:not(.calendar-cell-empty) { transform: none; box-shadow: none; }

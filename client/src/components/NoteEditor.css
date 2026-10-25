@@ -50,8 +50,8 @@
 
 .toolbar-btn-active {
   /* Softer active state: prevents format toggles from feeling visually heavy */
-  background: color-mix(in srgb, var(--signal, #415A77) 12%, transparent);
-  color: var(--signal, #415A77);
+  background: color-mix(in srgb, var(--signal, #262626) 12%, transparent);
+  color: var(--signal, #262626);
 }
 
 .toolbar-divider {
@@ -172,7 +172,7 @@
 
 /* Blockquotes */
 .note-editor-content .ProseMirror blockquote {
-  border-left: 3px solid var(--signal, #415A77);
+  border-left: 3px solid var(--signal, #262626);
   padding-left: var(--space-4, 16px);
   margin-left: 0;
   margin-right: 0;
@@ -191,7 +191,7 @@
   border-radius: 4px;
   font-size: 0.85em;
   font-family: monospace;
-  color: var(--signal, #415A77);
+  color: var(--signal, #262626);
   border: 1px solid var(--border-subtle, rgba(226, 232, 240, 0.8));
 }
 

@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link, Navigate } from 'react-router-dom';
 import { MailCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import './AuthForm.css';
+import AuthAside from '../components/AuthAside.jsx';
 
 const PENDING_KEY = 'preplytics.pendingVerifyEmail';
 const COOLDOWN_SECONDS = 60;
@@ -87,6 +88,7 @@ function VerifyEmail() {
 
   return (
     <div className="auth-page">
+      <AuthAside />
       <form className="auth-form surface" onSubmit={handleVerify}>
         <div className="auth-brand">Preplytics</div>
         <div className="auth-icon"><MailCheck size={26} /></div>

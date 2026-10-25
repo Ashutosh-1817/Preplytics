@@ -4,7 +4,7 @@ import {
 } from 'recharts';
 import { formatDuration } from '../../utils/formatDuration.js';
 
-const PALETTE = ['#415A77', '#B7791F', '#2F7D5B', '#778DA9', '#B3392F', '#1B263B'];
+const PALETTE = ['#0A0A0A', '#7A7A76', '#B5B5B0', '#3D3D3B', '#B3382C', '#3F7A4F'];
 const OTHER_COLOR = '#94A3B8';
 const AXIS_TICK = { fontSize: 12, fill: 'var(--ink-muted)' };
 
