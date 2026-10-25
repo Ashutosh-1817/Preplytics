@@ -1,15 +1,21 @@
 import { MessageSquareText } from 'lucide-react';
 import { useAIDrawer } from '../context/AIDrawerContext.jsx';
-import './AIDrawerToggle.css';
+import { useAuth } from '../context/AuthContext.jsx';
 
+// The floating PrepBot button. Only shown to signed-in users, and hidden while the drawer is open.
 function AIDrawerToggle() {
   const { isOpen, toggleDrawer } = useAIDrawer();
+  const { user } = useAuth();
 
-  if (isOpen) return null;
+  if (isOpen || !user) return null;
 
   return (
-    <button className="ai-drawer-toggle" onClick={toggleDrawer} title="PrepBot" aria-label="Open AI assistant">
-      <MessageSquareText size={24} />
+    <button type="button" className="prepbot-fab" onClick={toggleDrawer} title="Ask PrepBot" aria-label="Open PrepBot">
+      <span className="prepbot-fab-icon">
+        <MessageSquareText size={18} />
+        <i aria-hidden="true" />
+      </span>
+      <span className="prepbot-fab-label">PrepBot</span>
     </button>
   );
 }

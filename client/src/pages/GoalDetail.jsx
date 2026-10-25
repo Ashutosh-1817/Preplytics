@@ -1,8 +1,6 @@
-
-
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { ListChecks, CalendarPlus, RefreshCw, Pencil, CalendarDays, Clock ,BookOpen} from 'lucide-react';
+import { ListChecks, CalendarPlus, RefreshCw, Pencil, CalendarDays, Clock, BookOpen, MousePointerClick } from 'lucide-react';
 import {
   fetchGoal,
   fetchRoadmapTree,
@@ -35,6 +33,26 @@ const findNodeById = (nodes, id) => {
   return null;
 };
 
+// Totals for the stat strip: only topics you can actually study (actionable nodes) are counted.
+const summarizeTree = (nodes) => {
+  const totals = { total: 0, done: 0, spent: 0, remaining: 0 };
+  const walk = (list) => {
+    list.forEach((n) => {
+      if (n.isActionable) {
+        totals.total += 1;
+        totals.spent += n.actualMinutesSpent || 0;
+        if (n.status === 'completed') totals.done += 1;
+        else totals.remaining += n.estimatedMinutes || 0;
+      }
+      walk(n.children || []);
+    });
+  };
+  walk(nodes);
+  return totals;
+};
+
+const STATUS_LABEL = { not_started: 'Not started', in_progress: 'In progress', completed: 'Completed' };
+
 const overloadNote = (r) =>
   r?.isOverloaded
     ? ` ⚠ This plan needs about ${formatDuration(r.requiredDailyMinutes)} a day, more than your ${formatDuration(r.dailyCapacityMinutes)} daily time.`
@@ -53,7 +71,6 @@ function GoalDetail() {
   const [newSubjectTitle, setNewSubjectTitle] = useState('');
   const [scheduleMessage, setScheduleMessage] = useState('');
   const [showScheduleSuccess, setShowScheduleSuccess] = useState(false);
-  const [showSyllabusModal, setShowSyllabusModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRoadmapWizard, setShowRoadmapWizard] = useState(false);
   const [pendingWizard, setPendingWizard] = useState(Boolean(location.state?.autoGenerate));
@@ -149,16 +166,6 @@ function GoalDetail() {
     }
   };
 
-  // const handleSyllabusSaved = (result) => {
-  //   setShowSyllabusModal(false);
-  //   setScheduleMessage(
-  //     `Syllabus saved: ${result.chaptersCreated} chapters, ${result.subtopicsCreated} subtopics.` +
-  //       (result.schedule.created > 0 ? ` ${result.schedule.created} tasks scheduled.${overloadNote(result.schedule)}` : '')
-  //   );
-  //   loadAll();
-  //   if (result.schedule.created > 0) setShowScheduleSuccess(true);
-  // };
-
  const handleSubjectRoadmapSaved = async (result) => {
   const title = subjectForModal?.title;
   setSubjectForModal(null);
@@ -198,6 +205,9 @@ const handleSubjectsSaved = async (result) => {
 
   if (!goal || !tree) return <div className="skeleton" style={{ height: 300 }} />;
 
+  const stats = summarizeTree(tree);
+  const percent = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
+
   const dueLabel = goal.targetDate
     ? new Date(goal.targetDate).toLocaleDateString(undefined, {
         day: 'numeric',
@@ -213,7 +223,7 @@ const handleSubjectsSaved = async (result) => {
         <div className="goal-detail-heading">
           <div className="goal-detail-title-row">
             <span className="goal-dot" style={{ background: goal.color }} />
-            <h1 className="text-stat" style={{ fontSize: 'var(--text-xl)' }}>{goal.title}</h1>
+            <h1 className="text-stat">{goal.title}</h1>
             <button className="goal-edit-btn" onClick={() => setShowEditModal(true)} title="Edit goal" aria-label="Edit goal">
               <Pencil size={15} />
             </button>
@@ -228,13 +238,33 @@ const handleSubjectsSaved = async (result) => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-          <button className="btn btn-ghost" onClick={handleGenerateSchedule}>
+        <div className="goal-detail-actions">
+          <button className="btn btn-ghost gd-action" onClick={handleGenerateSchedule}>
             <CalendarPlus size={16} /> Generate schedule
           </button>
-          <button className="btn btn-ghost" onClick={handleRegenerateSchedule}>
+          <button className="btn btn-ghost gd-action" onClick={handleRegenerateSchedule}>
             <RefreshCw size={16} /> Regenerate
           </button>
+        </div>
+      </div>
+
+      <div className="gd-stats">
+        <div className="gd-stat">
+          <span className="gd-stat-label">Progress</span>
+          <span className="gd-stat-value">{percent}<small>%</small></span>
+          <div className="gd-stat-bar"><i style={{ width: `${percent}%` }} /></div>
+        </div>
+        <div className="gd-stat">
+          <span className="gd-stat-label">Topics done</span>
+          <span className="gd-stat-value">{stats.done}<small>of {stats.total}</small></span>
+        </div>
+        <div className="gd-stat">
+          <span className="gd-stat-label">Time spent</span>
+          <span className="gd-stat-value">{formatDuration(stats.spent)}</span>
+        </div>
+        <div className="gd-stat">
+          <span className="gd-stat-label">Planned time left</span>
+          <span className="gd-stat-value">{stats.remaining ? formatDuration(stats.remaining) : '—'}</span>
         </div>
       </div>
 
@@ -257,11 +287,11 @@ const handleSubjectsSaved = async (result) => {
       <div className="goal-detail-body">
         <div className="surface roadmap-panel">
           <div className="roadmap-panel-header">
-            <h3 className="text-muted" style={{ fontSize: 'var(--text-sm)' }}>Roadmap</h3>
+            <h3>Roadmap</h3>
           </div>
 
           {tree.length === 0 && (
-            <div style={{ padding: 'var(--space-4)' }}>
+            <div className="roadmap-start" style={{ padding: 'var(--space-4)' }}>
               <h3 style={{ marginBottom: 'var(--space-2)' }}>Start your roadmap</h3>
               <ol className="text-muted" style={{ fontSize: 'var(--text-sm)', paddingLeft: '1.2rem', display: 'grid', gap: 4 }}>
                 <li>Optional: open “Know Your Goal” above for a quick briefing.</li>
@@ -277,7 +307,7 @@ const handleSubjectsSaved = async (result) => {
             </div>
           )}
 
-          <div style={{ padding: 'var(--space-3) var(--space-4)' }}>
+          <div className="roadmap-scroll">
 
             {tree.some((n) => n.children.length === 0 && !n.isActionable) && (
               <p className="text-muted" style={{ fontSize: 'var(--text-sm)', padding: '0 var(--space-4) var(--space-2)' }}>
@@ -310,33 +340,44 @@ const handleSubjectsSaved = async (result) => {
         <div className="surface node-detail-panel">
           {selectedNode ? (
             <>
-              <h3>{selectedNode.title}</h3>
-              <p className="text-muted" style={{ fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>
-                Status: {selectedNode.status.replace('_', ' ')}
-              </p>
+              <div className="node-detail-head">
+                <h3>{selectedNode.title}</h3>
+                <div className="node-chips">
+                  <span className={`node-chip ${selectedNode.status === 'completed' ? 'is-done' : selectedNode.status === 'in_progress' ? 'is-active' : ''}`}>
+                    {STATUS_LABEL[selectedNode.status] || selectedNode.status.replace('_', ' ')}
+                  </span>
+                  {selectedNode.isActionable && (
+                    <>
+                      <span className="node-chip"><Clock size={12} /> Est. {selectedNode.estimatedMinutes ? formatDuration(selectedNode.estimatedMinutes) : '—'}</span>
+                      <span className="node-chip">Spent {formatDuration(selectedNode.actualMinutesSpent || 0)}</span>
+                    </>
+                  )}
+                </div>
+              </div>
               {selectedNode.isActionable && (
                 <>
-                  <p className="text-muted" style={{ fontSize: 'var(--text-sm)' }}>
-                    Estimated: {selectedNode.estimatedMinutes ?? '—'}m · Spent: {selectedNode.actualMinutesSpent}m
-                  </p>
-                     <button
-                      type="button"
-                      className="btn btn-primary"
-                      style={{ margin: 'var(--space-3) 0', width: '100%' }}
-                      onClick={() => {
-                        markSessionHandoff(selectedNode._id);
-                        navigate(`/prephub/${selectedNode._id}`);
-                      }}
-                     >
-                      <BookOpen size={16} /> Open PrepHub
-                    </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ marginBottom: 'var(--space-3)', width: '100%' }}
+                    onClick={() => {
+                      markSessionHandoff(selectedNode._id);
+                      navigate(`/prephub/${selectedNode._id}`);
+                    }}
+                  >
+                    <BookOpen size={16} /> Open PrepHub
+                  </button>
                   <SessionTimer nodeId={selectedNode._id} onSessionLogged={loadAll} />
                 </>
               )}
               <FileAttachments key={selectedNode._id} nodeId={selectedNode._id} title="Files for this topic" />
             </>
           ) : (
-            <p className="text-muted">Select a node to see details.</p>
+            <div className="node-empty">
+              <MousePointerClick size={26} />
+              <strong>Pick a topic</strong>
+              <span>Select a topic in the roadmap to see its time, files and study timer.</span>
+            </div>
           )}
         </div>
       </div>
@@ -377,14 +418,6 @@ const handleSubjectsSaved = async (result) => {
           goalTitle={goal.title}
           onClose={() => setShowRoadmapWizard(false)}
           onSaved={handleRoadmapSaved}
-        />
-      )}
-
-      {showSyllabusModal && (
-        <SyllabusPreviewModal
-          goalId={goalId}
-          onClose={() => setShowSyllabusModal(false)}
-          onSaved={handleSyllabusSaved}
         />
       )}
 

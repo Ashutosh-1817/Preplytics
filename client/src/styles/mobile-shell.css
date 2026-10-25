@@ -1,0 +1,14 @@
+/* src/styles/mobile-shell.css
+   theme.css pins the sidebar to 248px / 220px with a more specific selector than AppShell.css,
+   so on phones the sidebar ate most of the screen. This restores the compact icon rail. */
+@media (max-width: 768px) {
+  body .app-shell .sidebar { width: 72px; padding: 12px 8px; gap: 10px; }
+  body .app-shell .sidebar-brand,
+  body .app-shell .sidebar-label,
+  body .app-shell .sidebar-user-text,
+  body .app-shell .sidebar-group-label { display: none; }
+  body .app-shell .sidebar-link { justify-content: center; padding: 10px 0; }
+  body .app-shell .sidebar-link-active::before { left: -8px; }
+  body .app-shell .sidebar-user { flex-direction: column; padding: 8px; }
+  body .app-content { padding: 16px 14px 32px; }
+}

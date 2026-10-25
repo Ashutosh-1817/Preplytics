@@ -154,7 +154,8 @@ function Dashboard() {
     fetchOverview().then(setOverview).catch(() => setOverview({ goals: [] }));
     fetchStreak().then(setStreak).catch(() => setStreak({ currentStreak: 0, longestStreak: 0 }));
     fetchHeatmap().then(setHeatmap).catch(() => setHeatmap([]));
-    fetchTodayTasks().then(setTasks).catch(() => setTasks([]));
+    // Tasks whose topic was deleted cannot be started, so they are left out.
+    fetchTodayTasks().then((list) => setTasks(list.filter((t) => t.nodeId))).catch(() => setTasks([]));
   }, []);
 
   const hour = new Date().getHours();
@@ -292,15 +293,13 @@ function Dashboard() {
         </div>
       </section>
 
-      <div className="dashboard-split">
-        <section>
-          <div className="section-header">
+      <div className="dash-lower">
+        <section className="plan-panel" aria-label="Today's plan">
+          <div className="plan-head">
             <div>
               <h2 className="section-title">Today's plan</h2>
               {visibleTasks && visibleTasks.length > 0 && (
-                <span className="text-muted" style={{ fontSize: 'var(--text-xs)' }}>
-                  {doneCount} of {visibleTasks.length} done
-                </span>
+                <span className="plan-sub">{doneCount} of {visibleTasks.length} done</span>
               )}
             </div>
 
@@ -325,21 +324,23 @@ function Dashboard() {
             )}
           </div>
 
-          {startError && <p className="auth-error" style={{ marginBottom: 'var(--space-3)' }}>{startError}</p>}
+          <div className="plan-scroll">
+            {startError && <p className="auth-error" style={{ marginBottom: 'var(--space-3)' }}>{startError}</p>}
 
-          {visibleTasks === null && <div className="card skeleton" style={{ height: 90 }} />}
-          {visibleTasks?.length === 0 && <div className="empty-state">Nothing scheduled for today.</div>}
+            {visibleTasks === null && <div className="card skeleton" style={{ height: 90 }} />}
+            {visibleTasks?.length === 0 && <div className="empty-state">Nothing scheduled for today.</div>}
 
-          <div className="task-list">
-            {visibleTasks?.map((task) => (
-              <TodayTaskCard
-                key={task._id}
-                task={task}
-                onStart={handleStart}
-                isStarting={startingId === task._id}
-                showGoal={taskGoals.length > 1 && goalFilter === 'all'}
-              />
-            ))}
+            <div className="task-list">
+              {visibleTasks?.map((task) => (
+                <TodayTaskCard
+                  key={task._id}
+                  task={task}
+                  onStart={handleStart}
+                  isStarting={startingId === task._id}
+                  showGoal={taskGoals.length > 1 && goalFilter === 'all'}
+                />
+              ))}
+            </div>
           </div>
         </section>
 

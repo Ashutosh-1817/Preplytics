@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { Plus, Search, Trash2, FileText, PenLine } from 'lucide-react';
 import { fetchNotes, createNote, updateNote, deleteNote } from '../services/notes.api.js';
 import NoteEditor from '../components/NoteEditor.jsx';
 import './Notes.css';
@@ -14,11 +15,24 @@ const deriveTitleFromText = (text) => {
   return firstWord.length > 30 ? firstWord.slice(0, 30).trim() + '…' : firstWord;
 };
 
+const timeAgo = (value) => {
+  if (!value) return '';
+  const minutes = Math.round((Date.now() - new Date(value).getTime()) / 60000);
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(value).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+};
+
 function Notes() {
   const [notes, setNotes] = useState(null);
   const [activeNoteId, setActiveNoteId] = useState(null);
   const [title, setTitle] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
+  const [query, setQuery] = useState('');
   const { setDrawerContext, clearDrawerContext } = useAIDrawer();
 
   // Tracks whether the CURRENT note's title is still auto-derived from
@@ -35,6 +49,13 @@ function Notes() {
   useEffect(() => {
     loadNotes();
   }, []);
+
+  const visibleNotes = useMemo(() => {
+    if (!notes) return null;
+    const q = query.trim().toLowerCase();
+    if (!q) return notes;
+    return notes.filter((n) => `${n.title} ${n.contentText || ''}`.toLowerCase().includes(q));
+  }, [notes, query]);
 
   const activeNote = notes?.find((n) => n._id === activeNoteId) || null;
 
@@ -149,23 +170,47 @@ function Notes() {
   return (
     <div className="notes-page">
       <div className="notes-sidebar surface">
-        <button className="btn btn-primary" style={{ width: '100%', marginBottom: 'var(--space-3)' }} onClick={handleCreateNote}>
-          + New note
-        </button>
+        <div className="notes-side-head">
+          <span className="notes-side-title">
+            Notes
+            {notes && notes.length > 0 && <span className="notes-count">{notes.length}</span>}
+          </span>
+          <button className="btn btn-primary notes-new" onClick={handleCreateNote}>
+            <Plus size={15} /> New
+          </button>
+        </div>
 
-        {notes === null && <div className="skeleton" style={{ height: 40, marginBottom: 8 }} />}
-        {notes?.length === 0 && <p className="text-muted" style={{ fontSize: 'var(--text-sm)' }}>No notes yet.</p>}
+        <label className="notes-search">
+          <Search size={15} />
+          <input
+            type="search"
+            placeholder="Search notes"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search notes"
+          />
+        </label>
+
+        {notes === null && <div className="skeleton" style={{ height: 56, marginBottom: 8 }} />}
+        {notes?.length === 0 && <p className="notes-none">No notes yet. Create your first one.</p>}
+        {notes?.length > 0 && visibleNotes?.length === 0 && <p className="notes-none">Nothing matches “{query}”.</p>}
 
         <div className="notes-list">
-          {notes?.map((note) => (
+          {visibleNotes?.map((note) => (
             <div
               key={note._id}
               className={`notes-list-item ${activeNoteId === note._id ? 'notes-list-item-active' : ''}`}
               onClick={() => handleSelectNote(note)}
             >
               <span className="notes-list-color" style={{ background: note.color }} />
-              <span className="notes-list-title">{note.title}</span>
-              <button className="notes-list-delete" onClick={(e) => handleDeleteNote(note._id, e)}>✕</button>
+              <div className="notes-list-body">
+                <span className="notes-list-title">{note.title || 'Untitled Note'}</span>
+                {note.contentText && <span className="notes-list-snippet">{note.contentText}</span>}
+                <span className="notes-list-time">{timeAgo(note.updatedAt)}</span>
+              </div>
+              <button className="notes-list-delete" onClick={(e) => handleDeleteNote(note._id, e)} aria-label="Delete note" title="Delete note">
+                <Trash2 size={14} />
+              </button>
             </div>
           ))}
         </div>
@@ -181,8 +226,8 @@ function Notes() {
                 onChange={handleTitleChange}
                 placeholder="Untitled Note"
               />
-              <span className="text-muted" style={{ fontSize: 'var(--text-xs)' }}>
-                {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? 'Saved' : ''}
+              <span className={`notes-status ${saveStatus === 'saved' ? 'is-saved' : ''}`}>
+                {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? 'Saved' : <><PenLine size={13} /> Auto-saves</>}
               </span>
             </div>
             <FileAttachments key={`att-${activeNote._id}`} noteId={activeNote._id} title="Attachments" compact />
@@ -190,7 +235,9 @@ function Notes() {
           </>
         ) : (
           <div className="notes-empty">
-            <p className="text-muted">Select a note or create a new one.</p>
+            <span className="notes-empty-icon"><FileText size={26} /></span>
+            <strong>Select a note or start a new one</strong>
+            <span className="text-muted">Notes save as you type and PrepBot can read them when you ask.</span>
           </div>
         )}
       </div>

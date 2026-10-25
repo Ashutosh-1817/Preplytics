@@ -3,7 +3,7 @@ import { createGoal } from '../services/goals.api.js';
 import './CreateGoalModal.css';
 import DurationPicker from './DurationPicker.jsx';
 
-const PRESET_COLORS = ['#0A0A0A', '#6B6B68', '#2F5D8A', '#3F7A4F', '#B07B2A', '#B3382C'];
+const PRESET_COLORS = ['#5443D6', '#00B2AD', '#C77A0B', '#D63B48', '#0E8A5E', '#2F6FD6'];
 
 function CreateGoalModal({ onClose, onCreated }) {
   const [title, setTitle] = useState('');
