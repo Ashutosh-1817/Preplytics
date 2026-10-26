@@ -8,6 +8,7 @@ import CatchUpDialog from '../components/CatchUpDialog.jsx';
 import CalendarGrid from '../components/CalendarGrid.jsx';
 import TaskListView from '../components/TaskListView.jsx';
 import './Calendar.css';
+import Select from '../components/Select.jsx';
 
 function startOfMonthRange(year, month) {
   const start = new Date(Date.UTC(year, month, 1));
@@ -117,11 +118,11 @@ function CalendarPage() {
           </div>
 
           {goals.length > 0 && (
-            <select className="auth-input goal-select" value={selectedGoalId} onChange={(e) => setSelectedGoalId(e.target.value)}>
+            <Select className="ui-select--wide" aria-label="Goal" value={selectedGoalId} onChange={(e) => setSelectedGoalId(e.target.value)}>
               {goals.map((g) => (
                 <option key={g._id} value={g._id}>{g.title}</option>
               ))}
-            </select>
+            </Select>
           )}
         </div>
       </div>

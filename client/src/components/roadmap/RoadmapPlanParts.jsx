@@ -1,6 +1,7 @@
 import { CheckCircle2, AlertTriangle, Ban, Gauge, Loader2, Lock, RefreshCw, X } from 'lucide-react';
 import { formatDuration } from '../../utils/formatDuration.js';
 import { LEVEL_OPTIONS, KIND_OPTIONS, PRIORITY_OPTIONS } from '../../utils/roadmapDraft.js';
+import Select from '../Select.jsx';
 
 // Small pieces shared by the roadmap review screens (GoalRoadmapWizard and
 // SyllabusPreviewModal). Styles live in SyllabusPreviewModal.css (rp-* classes).
@@ -39,12 +40,12 @@ export function LevelPills({ value, onChange, title }) {
 // Compact per-subject / per-chapter override. An empty value means "same as the parent".
 export function LevelSelect({ value, onChange, inheritLabel, ariaLabel }) {
   return (
-    <select className="rp-select" aria-label={ariaLabel} value={value || ''} onChange={(e) => onChange(e.target.value || null)}>
+    <Select variant="compact" aria-label={ariaLabel} value={value || ''} onChange={(e) => onChange(e.target.value || null)}>
       <option value="">{inheritLabel}</option>
       {LEVEL_OPTIONS.map((level) => (
         <option key={level.id} value={level.id}>{level.label}</option>
       ))}
-    </select>
+    </Select>
   );
 }
 
@@ -264,12 +265,12 @@ export function TopicRow({ topic, minutes, info, mode, locked, onTitle, onMinute
         <span className="text-muted" style={{ fontSize: 'var(--text-xs)' }}>min</span>
 
         {/* Kind and Priority selects moved up into the main row */}
-        <select className="rp-select" aria-label="Kind of study" value={topic.kind} onChange={(e) => onKind(e.target.value)}>
+        <Select variant="compact" aria-label="Kind of study" value={topic.kind} onChange={(e) => onKind(e.target.value)}>
           {KIND_OPTIONS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}
-        </select>
-        <select className="rp-select" aria-label="Priority" value={topic.priority} onChange={(e) => onPriority(e.target.value)}>
+        </Select>
+        <Select variant="compact" aria-label="Priority" value={topic.priority} onChange={(e) => onPriority(e.target.value)}>
           {PRIORITY_OPTIONS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-        </select>
+        </Select>
 
         {locked && (
           <button type="button" className="syllabus-delete rp-lock" title="Locked to your time. Click to let the app adjust it again." onClick={onUnlock}>

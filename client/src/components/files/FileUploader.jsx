@@ -5,6 +5,7 @@ import { UploadCloud, X, CheckCircle2, AlertCircle, Loader2, Target } from 'luci
 import useFileUploads from '../../hooks/useFileUploads.js';
 import { ACCEPT_ATTR, formatFileSize } from '../../utils/fileHelpers.js';
 import './files.css';
+import Select from '../Select.jsx';
 
 const statusLabel = (item) => {
   if (item.status === 'queued') return 'Waiting…';
@@ -85,12 +86,12 @@ function FileUploader({ goals = [], onUploaded }) {
         {goals.length > 0 && (
           <label className="dropzone-link" onClick={(e) => e.stopPropagation()}>
             <Target size={14} />
-            <select value={linkGoalId} onChange={(e) => setLinkGoalId(e.target.value)}>
+            <Select variant="link" aria-label="Link to a goal" value={linkGoalId} onChange={(e) => setLinkGoalId(e.target.value)}>
               <option value="">Don't link to a goal</option>
               {goals.map((g) => (
                 <option key={g._id} value={g._id}>{g.title}</option>
               ))}
-            </select>
+            </Select>
           </label>
         )}
       </div>

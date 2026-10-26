@@ -221,3 +221,14 @@
 .note-editor-content ul[data-type='taskList'] li > div { flex: 1 1 auto; }
 .note-editor-content ul[data-type='taskList'] li[data-checked='true'] > div { text-decoration: line-through; opacity: 0.6; }
 .note-editor-content mark { border-radius: 3px; padding: 0 2px; }
+
+/* ---------- Tables and code blocks (e.g. from saved PrepBot answers) ---------- */
+.note-editor-content .ProseMirror table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 14px 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; font-size: 0.9em; table-layout: auto; }
+.note-editor-content .ProseMirror th, .note-editor-content .ProseMirror td { padding: 9px 13px; border-bottom: 1px solid var(--border-subtle); border-right: 1px solid var(--border-subtle); text-align: left; vertical-align: top; min-width: 90px; }
+.note-editor-content .ProseMirror th { background: var(--surface-raised); font-weight: 650; }
+.note-editor-content .ProseMirror tr:last-child td { border-bottom: 0; }
+.note-editor-content .ProseMirror th:last-child, .note-editor-content .ProseMirror td:last-child { border-right: 0; }
+.note-editor-content .ProseMirror td p, .note-editor-content .ProseMirror th p { margin: 0; }
+.note-editor-content .ProseMirror .selectedCell { background: color-mix(in srgb, var(--signal) 10%, transparent); }
+.note-editor-content .ProseMirror pre { white-space: pre; overflow-x: auto; tab-size: 4; }
+.note-editor-content .ProseMirror hr { border: 0; border-top: 1px solid var(--border); margin: 18px 0; }

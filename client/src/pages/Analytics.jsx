@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, Download, RotateCw, CircleAlert } from 'lucide-react';
+import { Download, RotateCw, CircleAlert } from 'lucide-react';
 import { fetchGoals } from '../services/goals.api.js';
 import { fetchAnalytics } from '../services/analytics.api.js';
 import ReadinessHero from '../components/analytics/ReadinessHero.jsx';
@@ -18,6 +18,8 @@ import EstimateAccuracy from '../components/analytics/EstimateAccuracy.jsx';
 import AnalyticsSkeleton from '../components/analytics/AnalyticsSkeleton.jsx';
 import { Segmented } from '../components/analytics/chartKit.jsx';
 import './Analytics.css';
+import Select from '../components/Select.jsx';
+
 
 const RANGES = [
   { value: 7, label: '7D' },
@@ -93,16 +95,12 @@ function Analytics() {
         </div>
 
         <div className="ax-filters">
-          <label className="ax-select-wrap">
-            <span className="ax-visually-hidden">Goal</span>
-            <select className="ax-select" value={goalId} onChange={(e) => setGoalId(e.target.value)}>
+          <Select className="ui-select--wide" aria-label="Goal" value={goalId} onChange={(e) => setGoalId(e.target.value)}>
               <option value="all">All goals</option>
               {goals.map((g) => (
                 <option key={g._id} value={g._id}>{g.title}</option>
               ))}
-            </select>
-            <ChevronDown size={16} className="ax-select-chevron" aria-hidden="true" />
-          </label>
+            </Select>
 
           <Segmented label="Date range" options={RANGES} value={range} onChange={setRange} />
 

@@ -15,6 +15,7 @@ import { timeAgo } from '../utils/timeAgo.js';
 import ResearchAnswer from '../components/research/ResearchAnswer.jsx';
 import SourceCard from '../components/research/SourceCard.jsx';
 import '../components/research/research.css';
+import Select from '../components/Select.jsx';
 
 const TIME_RANGES = [
   { value: 'any', label: 'Any time' },
@@ -296,19 +297,19 @@ function Research() {
                 </button>
               </div>
 
-              <select className="research-select" value={form.timeRange} onChange={(e) => patchForm({ timeRange: e.target.value })} aria-label="Time range">
+              <Select value={form.timeRange} onChange={(e) => patchForm({ timeRange: e.target.value })} aria-label="Time range">
                 {TIME_RANGES.map((t) => (
                   <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
-              </select>
+              </Select>
 
               {goals.length > 0 && (
-                <select className="research-select" value={form.goalId} onChange={(e) => patchForm({ goalId: e.target.value })} aria-label="Tailor to goal">
+                <Select value={form.goalId} onChange={(e) => patchForm({ goalId: e.target.value })} aria-label="Tailor to goal">
                   <option value="">No goal</option>
                   {goals.map((g) => (
                     <option key={g._id} value={g._id}>Tailor to: {g.title}</option>
                   ))}
-                </select>
+                </Select>
               )}
 
               <button

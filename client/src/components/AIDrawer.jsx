@@ -144,13 +144,15 @@ function AIDrawer() {
 
   const handleSaveAsNote = async (msg, idx) => {
     try {
-      await saveAiResultAsNote({
+      const saved = await saveAiResultAsNote({
         content: msg.content,
         contentJSON: textToTiptapDoc(msg.content),
         title: msg.suggestedTitle || 'AI-generated note',
         goalId: msg.goalId,
-        nodeId: msg.nodeId,
+        nodeId: msg.nodeId ?? (context.type === 'node' ? context.id : undefined),
       });
+      // lets open screens (like PrepHub's Notes list) show the new note immediately
+      window.dispatchEvent(new CustomEvent('preplytics:note-saved', { detail: saved }));
       setMessages((prev) => prev.map((m, i) => (i === idx ? { ...m, saved: true } : m)));
     } catch {
       setError('Could not save this as a note.');

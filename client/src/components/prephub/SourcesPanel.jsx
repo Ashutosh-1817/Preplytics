@@ -28,29 +28,42 @@ function useClickOutside(ref, onOutside, active) {
   }, [ref, onOutside, active]);
 }
 
-function AttachNoteMenu({ onPick, onClose }) {
+function AttachNoteMenu({ currentIds, onPick, onClose }) {
   const [notes, setNotes] = useState(null);
+  const [q, setQ] = useState('');
   const ref = useRef(null);
   useClickOutside(ref, onClose, true);
 
+  // Every note you own, newest first, except the ones already in this topic
   useEffect(() => {
     fetchNotes()
-      .then((all) => setNotes(all.filter((n) => !n.nodeId)))
+      .then((all) => setNotes(all.filter((n) => !currentIds.has(n._id))))
       .catch(() => setNotes([]));
-  }, []);
+  }, [currentIds]);
+
+  const term = q.trim().toLowerCase();
+  const shown = (notes ?? []).filter((n) => !term || (n.title || '').toLowerCase().includes(term));
 
   return (
-    <div className="ph-menu ph-menu-wide" ref={ref}>
-      <p className="ph-menu-title">Link a note you already wrote</p>
-      {!notes && <p className="ph-menu-empty"><Loader2 size={14} className="ph-spin" /> Loading…</p>}
-      {notes && notes.length === 0 && <p className="ph-menu-empty">All your notes are already linked to a topic.</p>}
-      {notes?.map((n) => (
-        <button key={n._id} type="button" className="ph-menu-item" onClick={() => onPick(n)}>
-          <StickyNote size={14} />
-          <span>{n.title || 'Untitled note'}</span>
-          <em>{timeAgo(n.updatedAt)}</em>
-        </button>
-      ))}
+    <div className="ph-menu ph-menu-wide ph-menu-notes" ref={ref}>
+      <p className="ph-menu-title">Add a note to this topic{notes ? ` · ${notes.length}` : ''}</p>
+      <div className="ph-menu-search">
+        <Search size={13} />
+        <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search all your notes" aria-label="Search your notes" />
+      </div>
+      <div className="ph-menu-scroll">
+        {!notes && <p className="ph-menu-empty"><Loader2 size={14} className="ph-spin" /> Loading…</p>}
+        {notes && notes.length === 0 && <p className="ph-menu-empty">Every note you own is already in this topic.</p>}
+        {notes && notes.length > 0 && shown.length === 0 && <p className="ph-menu-empty">No notes match “{q}”.</p>}
+        {shown.map((n) => (
+          <button key={n._id} type="button" className="ph-menu-item" onClick={() => onPick(n)}>
+            <StickyNote size={14} />
+            <span>{n.title || 'Untitled note'}</span>
+            {n.nodeId ? <b className="ph-menu-tag" title="Adding it here moves it from its current topic">Other topic</b> : null}
+            <em>{timeAgo(n.updatedAt)}</em>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -68,6 +81,7 @@ function SourcesPanel({
   useClickOutside(templatesRef, () => setTemplatesOpen(false), templatesOpen);
 
   const q = query.trim().toLowerCase();
+  const currentIds = useMemo(() => new Set((notes ?? []).map((n) => n._id)), [notes]);
 
   const visibleNotes = useMemo(
     () =>
@@ -170,6 +184,7 @@ function SourcesPanel({
               </button>
               {attachOpen && (
                 <AttachNoteMenu
+                  currentIds={currentIds}
                   onClose={() => setAttachOpen(false)}
                   onPick={(note) => {
                     setAttachOpen(false);

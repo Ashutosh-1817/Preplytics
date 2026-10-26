@@ -1,66 +1,90 @@
+// Converts the Markdown PrepBot writes (headings, tables, code blocks, lists, task lists, quotes, links,
+// bold/italic/strike, inline code, math) into the exact Tiptap JSON the note editor uses, so a saved
+// answer looks the same in your notes as it did in the chat.
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 
-// Inline marks: **bold**, *italic*, `code`
-const parseInline = (text) => {
-  const nodes = [];
-  const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
-  let last = 0;
-  let match;
+const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMath);
 
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > last) nodes.push({ type: 'text', text: text.slice(last, match.index) });
-    const token = match[0];
+const text = (value, marks = []) => (value ? [{ type: 'text', text: value, ...(marks.length ? { marks } : {}) }] : []);
 
-    if (token.startsWith('**')) nodes.push({ type: 'text', text: token.slice(2, -2), marks: [{ type: 'bold' }] });
-    else if (token.startsWith('`')) nodes.push({ type: 'text', text: token.slice(1, -1), marks: [{ type: 'code' }] });
-    else nodes.push({ type: 'text', text: token.slice(1, -1), marks: [{ type: 'italic' }] });
-
-    last = match.index + token.length;
+// Inline nodes -> Tiptap text nodes. `code` cannot be combined with other marks in Tiptap, so it stands alone.
+function inline(node, marks = []) {
+  switch (node.type) {
+    case 'text': return text(node.value, marks);
+    case 'strong': return kids(node, [...marks, { type: 'bold' }]);
+    case 'emphasis': return kids(node, [...marks, { type: 'italic' }]);
+    case 'delete': return kids(node, [...marks, { type: 'strike' }]);
+    case 'link': return kids(node, [...marks.filter((m) => m.type !== 'link'), { type: 'link', attrs: { href: node.url } }]);
+    case 'inlineCode': return text(node.value, [{ type: 'code' }]);
+    case 'inlineMath': return text(`$${node.value}$`, [{ type: 'code' }]);
+    case 'break': return [{ type: 'hardBreak' }];
+    case 'image': return text(node.alt || node.url, [...marks, { type: 'link', attrs: { href: node.url } }]);
+    default: return node.children ? kids(node, marks) : text(node.value ?? '', marks);
   }
+}
+const kids = (node, marks) => (node.children ?? []).flatMap((c) => inline(c, marks));
 
-  if (last < text.length) nodes.push({ type: 'text', text: text.slice(last) });
-  return nodes.filter((n) => n.text);
+const paragraph = (node) => {
+  const content = kids(node, []);
+  return content.length ? { type: 'paragraph', content } : { type: 'paragraph' };
 };
 
-export const textToTiptapDoc = (markdown) => {
-  const content = [];
-  let listType = null;
-  let listItems = [];
+const blocks = (node) => {
+  const out = (node.children ?? []).flatMap(block);
+  return out.length ? out : [{ type: 'paragraph' }];
+};
 
-  const flushList = () => {
-    if (listItems.length) content.push({ type: listType, content: listItems });
-    listItems = [];
-    listType = null;
-  };
+function listItem(item, task) {
+  const content = blocks(item);
+  if (content[0].type !== 'paragraph') content.unshift({ type: 'paragraph' }); // items must start with a paragraph
+  return task
+    ? { type: 'taskItem', attrs: { checked: item.checked === true }, content }
+    : { type: 'listItem', content };
+}
 
-  const pushListItem = (type, text) => {
-    if (listType !== type) {
-      flushList();
-      listType = type;
+function table(node) {
+  const rows = node.children.map((row, ri) => ({
+    type: 'tableRow',
+    content: row.children.map((cell) => ({
+      type: ri === 0 ? 'tableHeader' : 'tableCell',
+      content: [paragraph(cell)],
+    })),
+  }));
+  return { type: 'table', content: rows };
+}
+
+function block(node) {
+  switch (node.type) {
+    case 'paragraph': return [paragraph(node)];
+    case 'heading': {
+      const content = kids(node, []);
+      const attrs = { level: Math.min(node.depth, 3) };
+      return [content.length ? { type: 'heading', attrs, content } : { type: 'heading', attrs }];
     }
-    listItems.push({ type: 'listItem', content: [{ type: 'paragraph', content: parseInline(text) }] });
-  };
-
-  for (const raw of markdown.split('\n')) {
-    const line = raw.trimEnd();
-    if (!line.trim()) { flushList(); continue; }
-
-    const heading = line.match(/^(#{1,3})\s+(.*)$/);
-    const bullet = line.match(/^\s*[-*•]\s+(.*)$/);
-    const ordered = line.match(/^\s*\d+[.)]\s+(.*)$/);
-
-    if (heading) {
-      flushList();
-      content.push({ type: 'heading', attrs: { level: heading[1].length }, content: parseInline(heading[2]) });
-    } else if (bullet) {
-      pushListItem('bulletList', bullet[1]);
-    } else if (ordered) {
-      pushListItem('orderedList', ordered[1]);
-    } else {
-      flushList();
-      content.push({ type: 'paragraph', content: parseInline(line) });
+    case 'code': return [{ type: 'codeBlock', attrs: { language: node.lang || null }, ...(node.value ? { content: [{ type: 'text', text: node.value }] } : {}) }];
+    case 'math': return [{ type: 'codeBlock', attrs: { language: 'latex' }, content: [{ type: 'text', text: node.value }] }];
+    case 'blockquote': return [{ type: 'blockquote', content: blocks(node) }];
+    case 'thematicBreak': return [{ type: 'horizontalRule' }];
+    case 'table': return [table(node)];
+    case 'list': {
+      const task = node.children.some((i) => typeof i.checked === 'boolean');
+      if (task) return [{ type: 'taskList', content: node.children.map((i) => listItem(i, true)) }];
+      return [{
+        type: node.ordered ? 'orderedList' : 'bulletList',
+        ...(node.ordered ? { attrs: { start: node.start ?? 1 } } : {}),
+        content: node.children.map((i) => listItem(i, false)),
+      }];
     }
+    case 'html': return node.value.trim() ? [{ type: 'paragraph', content: text(node.value.trim()) }] : [];
+    case 'definition': case 'footnoteDefinition': return [];
+    default: return node.children ? [paragraph(node)] : node.value ? [{ type: 'paragraph', content: text(node.value) }] : [];
   }
+}
 
-  flushList();
-  return { type: 'doc', content: content.length ? content : [{ type: 'paragraph' }] };
+export const textToTiptapDoc = (markdown = '') => {
+  const tree = parser.runSync(parser.parse(String(markdown)));
+  return { type: 'doc', content: blocks(tree) };
 };

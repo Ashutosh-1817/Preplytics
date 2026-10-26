@@ -11,6 +11,7 @@ import {
 } from '../components/wrapped/slides.jsx';
 import { SPRING_SNAPPY } from '../components/motion/motionPresets.js';
 import './Wrapped.css';
+import Select from '../components/Select.jsx';
 
 const RANGES = [
   { value: 7, label: '7 days' },
@@ -156,14 +157,14 @@ function Wrapped() {
         </div>
 
         <div className="wrapped-filters">
-          <select className="wr-select" value={goalId} onChange={(e) => setGoalId(e.target.value)} aria-label="Goal">
+          <Select className="ui-select--wide" value={goalId} onChange={(e) => setGoalId(e.target.value)} aria-label="Goal">
             <option value="all">All goals</option>
             {goals.map((g) => (
               <option key={g._id} value={g._id}>
                 {g.title}
               </option>
             ))}
-          </select>
+          </Select>
 
           <div className="wr-range" role="group" aria-label="Period">
             {RANGES.map((r) => (

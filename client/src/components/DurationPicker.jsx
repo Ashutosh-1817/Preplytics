@@ -1,4 +1,5 @@
 import './DurationPicker.css';
+import Select from './Select.jsx';
 
 const HOUR_OPTIONS = Array.from({ length: 13 }, (_, i) => i); // 0–12
 const MINUTE_OPTIONS = [0, 15, 30, 45];
@@ -18,20 +19,20 @@ function DurationPicker({ totalMinutes, onChange }) {
   return (
     <div className="duration-picker">
       <div className="duration-field">
-        <select className="duration-select" value={hours} onChange={handleHoursChange}>
+        <Select variant="inline" value={hours} onChange={handleHoursChange}>
           {HOUR_OPTIONS.map((h) => (
             <option key={h} value={h}>{h}</option>
           ))}
-        </select>
+        </Select>
         <span className="duration-unit">hr</span>
       </div>
 
       <div className="duration-field">
-        <select className="duration-select" value={minutes} onChange={handleMinutesChange}>
+        <Select variant="inline" value={minutes} onChange={handleMinutesChange}>
           {MINUTE_OPTIONS.map((m) => (
             <option key={m} value={m}>{String(m).padStart(2, '0')}</option>
           ))}
-        </select>
+        </Select>
         <span className="duration-unit">min</span>
       </div>
 

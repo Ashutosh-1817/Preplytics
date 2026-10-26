@@ -13,6 +13,7 @@
     "@tiptap/extension-color": "^3.31.4",
     "@tiptap/extension-highlight": "^3.31.4",
     "@tiptap/extension-placeholder": "^3.31.4",
+    "@tiptap/extension-table": "^3.31.4",
     "@tiptap/extension-task-item": "^3.31.4",
     "@tiptap/extension-task-list": "^3.31.4",
     "@tiptap/extension-text-style": "^3.31.4",
@@ -31,7 +32,9 @@
     "recharts": "^3.10.1",
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
-    "remark-math": "^6.0.0"
+    "remark-math": "^6.0.0",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

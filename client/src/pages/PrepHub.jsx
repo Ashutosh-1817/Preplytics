@@ -18,6 +18,7 @@ import useWorkbench from '../components/prephub/useWorkbench.js';
 import { NOTE_TEMPLATES } from '../components/prephub/noteTemplates.js';
 import { readJson, writeJson } from '../components/prephub/prephubStorage.js';
 import './PrepHub.css';
+import './PrepHubPolish.css';
 
 const LAYOUT_KEY = 'prephub:layout';
 const DEFAULT_LAYOUT = { left: true, right: true, split: false };
@@ -144,6 +145,17 @@ function PrepHubInner({ nodeId }) {
       setActionError(getErrorMessage(err, 'Could not create the note.'));
     }
   };
+
+  
+  useEffect(() => {
+    const onSaved = (e) => {
+      const saved = e.detail;
+      if (!saved?._id || String(saved.nodeId) !== String(nodeId)) return;
+      setNotes((prev) => [saved, ...(prev ?? []).filter((n) => n._id !== saved._id)]);
+    };
+    window.addEventListener('preplytics:note-saved', onSaved);
+    return () => window.removeEventListener('preplytics:note-saved', onSaved);
+  }, [nodeId]);
 
   const handleAttachNote = async (note) => {
     setActionError('');

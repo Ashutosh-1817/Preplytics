@@ -11,6 +11,7 @@ import FileCard from '../components/files/FileCard.jsx';
 import FileViewer from '../components/files/FileViewer.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import './Files.css';
+import Select from '../components/Select.jsx';
 
 const FILTERS = [
   { key: 'all', label: 'All files' },
@@ -182,12 +183,12 @@ function Files() {
             )}
           </div>
 
-          <select className="files-select" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort files">
+          <Select className="ui-select--sort" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort files">
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
             <option value="name">Name</option>
             <option value="size">Largest</option>
-          </select>
+          </Select>
         </div>
       </div>
 
