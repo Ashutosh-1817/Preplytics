@@ -3,7 +3,7 @@ import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, CartesianG
 import { BarChart3 } from 'lucide-react';
 import {
   Card, Segmented, EmptyState, ChartTooltip, AXIS_TICK, AXIS_LINE,
-  dayLabel, dayLabelLong, hoursTick, mondayOf, useReducedMotion, fmtMin,
+  dayLabel, dayLabelLong, hoursTick, mondayOf, useReducedMotion, fmtMin, useSvgId,
 } from './chartKit.jsx';
 
 const toWeekly = (daily) => {
@@ -33,6 +33,7 @@ const METRICS = [
 
 export default function StudyActivityChart({ daily, range, summary }) {
   const reduced = useReducedMotion();
+  const barId = useSvgId('sb');
   const [metric, setMetric] = useState('minutes');
   const weekly = range > 90;
 
@@ -50,7 +51,7 @@ export default function StudyActivityChart({ daily, range, summary }) {
   return (
     <Card
       className="ax-card-hero"
-      title="Study activity"
+      icon={BarChart3} title="Study activity"
       sub={`${isTime ? 'Time studied' : 'Sessions logged'} per ${perPeriod}, with a ${weekly ? '4-week' : '7-day'} moving average`}
       actions={<Segmented label="Metric" options={METRICS} value={metric} onChange={setMetric} />}
     >
@@ -73,6 +74,12 @@ export default function StudyActivityChart({ daily, range, summary }) {
           <div className="ax-chart" role="img" aria-label={`Bar chart of ${isTime ? 'study time' : 'sessions'} per ${perPeriod}`}>
             <ResponsiveContainer width="100%" height={data.length > 45 ? 330 : 290}>
               <ComposedChart data={data} margin={{ top: 10, right: 8, left: -8, bottom: 0 }} barCategoryGap="22%">
+                <defs>
+                  <linearGradient id={barId} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--chart-1)" />
+                    <stop offset="100%" stopColor="var(--chart-4)" stopOpacity={0.85} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid vertical={false} stroke="var(--border-subtle)" />
                 <XAxis dataKey="date" tickFormatter={dayLabel} tick={AXIS_TICK} axisLine={AXIS_LINE} tickLine={false} minTickGap={34} tickMargin={8} />
                 <YAxis
@@ -95,8 +102,8 @@ export default function StudyActivityChart({ daily, range, summary }) {
                 <Bar
                   dataKey={metric}
                   name={isTime ? 'Study time' : 'Sessions'}
-                  fill="var(--chart-1)"
-                  radius={[5, 5, 0, 0]}
+                  fill={`url(#${barId})`}
+                  radius={[6, 6, 0, 0]}
                   maxBarSize={34}
                   isAnimationActive={!reduced}
                 />
@@ -125,7 +132,7 @@ export default function StudyActivityChart({ daily, range, summary }) {
           </div>
 
           <div className="ax-legend-inline" aria-hidden="true">
-            <span><i style={{ background: 'var(--chart-1)' }} />{isTime ? 'Study time' : 'Sessions'}</span>
+            <span><i style={{ background: 'linear-gradient(135deg, var(--chart-1), var(--chart-4))' }} />{isTime ? 'Study time' : 'Sessions'}</span>
             <span><i className="ax-legend-line" />{weekly ? '4-week average' : '7-day average'}</span>
             {data.length > 45 && <span className="ax-hint">Drag the handles below the chart to zoom</span>}
           </div>

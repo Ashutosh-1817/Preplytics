@@ -14,7 +14,7 @@ export default function PlanAdherence({ plan }) {
 
   if (!plan || total === 0) {
     return (
-      <Card title="Plan adherence" sub="How closely you follow your schedule">
+      <Card icon={ListChecks} title="Plan adherence" sub="How closely you follow your schedule">
         <EmptyState icon={ListChecks} title="No scheduled tasks in this period">
           Once your roadmap is scheduled, you will see how much of the plan you complete on time.
         </EmptyState>
@@ -26,7 +26,7 @@ export default function PlanAdherence({ plan }) {
   const pct = rate === null || rate === undefined ? null : Math.round(rate * 100);
 
   return (
-    <Card title="Plan adherence" sub="Scheduled tasks by outcome">
+    <Card icon={ListChecks} title="Plan adherence" sub="Scheduled tasks by outcome">
       <div className="ax-adh-top">
         <div className="ax-adh-score">
           <strong>{pct === null ? '—' : `${pct}%`}</strong>

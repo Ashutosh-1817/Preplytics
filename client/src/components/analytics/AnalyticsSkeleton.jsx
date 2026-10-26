@@ -1,15 +1,11 @@
 export default function AnalyticsSkeleton() {
   return (
-    <div className="ax-skel" aria-busy="true" aria-label="Loading analytics">
-      <div className="ax-skel-kpis">
-        {Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" />)}
-      </div>
-      <div className="skeleton ax-skel-hero" />
-      <div className="skeleton ax-skel-hero" />
-      <div className="ax-skel-pair">
-        <div className="skeleton" />
-        <div className="skeleton" />
-      </div>
+    <div className="ax-bento" aria-busy="true" aria-label="Loading analytics">
+      <div className="ax-cell-hero"><div className="skeleton ax-skel-block" style={{ minHeight: 560 }} /></div>
+      <div className="ax-cell-study"><div className="skeleton ax-skel-block" style={{ minHeight: 270 }} /></div>
+      <div className="ax-cell-streak"><div className="skeleton ax-skel-block" style={{ minHeight: 270 }} /></div>
+      <div className="ax-cell-topics"><div className="skeleton ax-skel-block" style={{ minHeight: 270 }} /></div>
+      <div className="ax-span-12"><div className="skeleton ax-skel-block" style={{ minHeight: 380 }} /></div>
     </div>
   );
 }

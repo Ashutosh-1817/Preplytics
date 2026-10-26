@@ -29,7 +29,7 @@ export default function SubjectBreakdown({ subjects, showGoal }) {
 
   if (total === 0) {
     return (
-      <Card title="Time by subject">
+      <Card icon={PieIcon} title="Time by subject">
         <EmptyState icon={PieIcon} title="No subject time yet">Log study sessions against roadmap topics to see where your time goes.</EmptyState>
       </Card>
     );
@@ -39,7 +39,7 @@ export default function SubjectBreakdown({ subjects, showGoal }) {
   const top = slices[0];
 
   return (
-    <Card title="Time by subject" sub={`${slices.length} subject${slices.length === 1 ? '' : 's'} · hover to focus`}>
+    <Card icon={PieIcon} title="Time by subject" sub={`${slices.length} subject${slices.length === 1 ? '' : 's'} · hover to focus`}>
       <div className="ax-subjects">
         <div className="ax-donut" role="img" aria-label="Donut chart of study time by subject">
           <ResponsiveContainer width="100%" height={210}>

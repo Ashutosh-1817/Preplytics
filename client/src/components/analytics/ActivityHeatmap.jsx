@@ -136,7 +136,7 @@ export default function ActivityHeatmap({ daily }) {
 
   return (
     <Card
-      title="Consistency"
+      icon={CalendarDays} title="Consistency"
       sub={active > 0 ? `${active} active day${active === 1 ? '' : 's'} · darker means more time` : 'Each square is one day'}
     >
       {active === 0 ? (

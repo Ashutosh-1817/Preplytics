@@ -75,10 +75,11 @@ export function EmptyState({ icon: Icon, title, children }) {
   );
 }
 
-export function Card({ title, sub, actions, className = '', children }) {
+export function Card({ title, sub, actions, icon: Icon, className = '', children }) {
   return (
     <section className={`ax-card ${className}`}>
       <header className="ax-card-head">
+        {Icon ? <span className="ax-card-icon"><Icon size={17} strokeWidth={2} /></span> : null}
         <div className="ax-card-titles">
           <h3 className="ax-card-title">{title}</h3>
           {sub ? <p className="ax-card-sub">{sub}</p> : null}

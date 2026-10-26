@@ -200,6 +200,94 @@ const getSubjectTime = async (owner, goalIds, tz, fromKey, toKey, goalTitleById)
   }));
 };
 
+// ---------- Syllabus coverage per subject ----------
+// Roadmap leaves rolled up to their top-level subject: how much of each subject is done.
+
+const getCoverage = async (goalIds, goalTitleById) => {
+  const rows = await RoadmapNode.aggregate([
+    { $match: { goalId: { $in: goalIds }, isActionable: true } },
+    {
+      $graphLookup: {
+        from: NODES,
+        startWith: { $ifNull: ['$parentId', null] },
+        connectFromField: 'parentId',
+        connectToField: '_id',
+        as: 'ancestors',
+        maxDepth: 3,
+      },
+    },
+    {
+      $addFields: {
+        subject: {
+          $cond: [
+            { $eq: ['$level', 1] },
+            { _id: '$_id', title: '$title' },
+            { $first: { $filter: { input: '$ancestors', as: 'a', cond: { $eq: ['$$a.level', 1] } } } },
+          ],
+        },
+      },
+    },
+    {
+      $group: {
+        _id: '$subject._id',
+        title: { $first: '$subject.title' },
+        goalId: { $first: '$goalId' },
+        totalMinutes: { $sum: MINUTES_EXPR },
+        doneMinutes: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, MINUTES_EXPR, 0] } },
+        nodes: { $sum: 1 },
+        doneNodes: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
+      },
+    },
+    { $match: { _id: { $ne: null } } },
+    { $sort: { totalMinutes: -1 } },
+  ]);
+
+  return rows.map((r) => ({
+    subjectId: r._id,
+    title: r.title ?? 'Untitled',
+    goalId: r.goalId,
+    goalTitle: goalTitleById.get(String(r.goalId)) ?? '',
+    totalMinutes: r.totalMinutes,
+    doneMinutes: r.doneMinutes,
+    nodes: r.nodes,
+    doneNodes: r.doneNodes,
+    percent: r.totalMinutes > 0 ? round2(r.doneMinutes / r.totalMinutes) : 0,
+  }));
+};
+
+// ---------- Study rhythm (weekday x hour, in the user's time zone) ----------
+// Minutes are attributed to the hour the session started in.
+
+const getRhythm = async (owner, goalIds, tz, fromKey, toKey) => {
+  const rows = await Session.aggregate([
+    {
+      $match: {
+        owner,
+        goalId: { $in: goalIds },
+        durationMinutes: { $gt: 0 },
+        startedAt: utcBounds(fromKey, toKey),
+      },
+    },
+    {
+      $addFields: {
+        day: localDay('$startedAt', tz),
+        dow: { $isoDayOfWeek: { date: '$startedAt', timezone: tz } }, // 1 = Monday ... 7 = Sunday
+        hour: { $hour: { date: '$startedAt', timezone: tz } },
+      },
+    },
+    { $match: { day: { $gte: fromKey, $lte: toKey } } },
+    {
+      $group: {
+        _id: { dow: '$dow', hour: '$hour' },
+        minutes: { $sum: '$durationMinutes' },
+        sessions: { $sum: 1 },
+      },
+    },
+  ]);
+
+  return rows.map((r) => ({ dow: r._id.dow, hour: r._id.hour, minutes: r.minutes, sessions: r.sessions }));
+};
+
 // ---------- Efficiency (E-ratio) ----------
 // estimated / actual over COMPLETED topics that have both an estimate and logged
 // time. > 1 = faster than estimated, < 1 = slower. Unclamped, unlike the
@@ -551,7 +639,7 @@ export const buildAnalytics = async (userId, { goalId, range, tz }) => {
   const fromKey = addDaysToKey(todayKey, -(range - 1));
   const weeksWindowStart = keyToUtcDate(addDaysToKey(todayKey, -(Math.max(range, 56) - 1) - 1));
 
-  const [daily, streak, subjects, efficiency, scopeRows, completionRows, plan] = await Promise.all([
+  const [daily, streak, subjects, efficiency, scopeRows, completionRows, plan, coverage, rhythm] = await Promise.all([
     getDaily(owner, goalIds, tz, fromKey, todayKey),
     getStreak(owner, tz, todayKey),
     getSubjectTime(owner, goalIds, tz, fromKey, todayKey, goalTitleById),
@@ -579,6 +667,8 @@ export const buildAnalytics = async (userId, { goalId, range, tz }) => {
       },
     ]),
     getPlanAdherence(owner, goalIds, fromKey, todayKey, todayKey),
+    getCoverage(goalIds, goalTitleById),
+    getRhythm(owner, goalIds, tz, fromKey, todayKey),
   ]);
 
   const scopeByGoal = new Map(scopeRows.map((r) => [String(r._id), r]));
@@ -632,6 +722,8 @@ export const buildAnalytics = async (userId, { goalId, range, tz }) => {
     efficiency,
     burndown,
     plan,
+    coverage,
+    rhythm,
     insights: buildInsights({ burndown, efficiency, streak }),
   };
 };

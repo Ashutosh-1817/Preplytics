@@ -11,7 +11,7 @@ export default function EstimateAccuracy({ efficiency, singleGoal }) {
 
   if (!efficiency || efficiency.nodes === 0) {
     return (
-      <Card title="Estimate accuracy" sub="Estimated vs actual time on completed topics">
+      <Card icon={Gauge} title="Estimate accuracy" sub="Estimated vs actual time on completed topics">
         <EmptyState icon={Gauge} title="Not enough timed topics yet">
           Complete topics that you timed with the session timer to see how accurate your estimates are.
         </EmptyState>
@@ -26,7 +26,7 @@ export default function EstimateAccuracy({ efficiency, singleGoal }) {
 
   return (
     <Card
-      title="Estimate accuracy"
+      icon={Gauge} title="Estimate accuracy"
       sub="Estimated ÷ actual time on completed topics"
       actions={<span className={`ax-pill ax-pill-${tone}`}>{verdict}</span>}
     >

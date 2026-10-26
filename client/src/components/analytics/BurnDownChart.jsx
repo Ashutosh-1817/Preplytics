@@ -35,7 +35,7 @@ export default function BurnDownChart({ burndown: b }) {
 
   if (!b?.available) {
     return (
-      <Card title="Burn-down" sub="Remaining work against the pace needed to hit your deadline.">
+      <Card icon={TrendingDown} title="Burn-down" sub="Remaining work against the pace needed to hit your deadline.">
         <EmptyState icon={TrendingDown} title="Nothing to chart yet">
           {EMPTY[b?.reason] ?? EMPTY.no_deadline}
         </EmptyState>
@@ -57,7 +57,7 @@ export default function BurnDownChart({ burndown: b }) {
   return (
     <Card
       className="ax-card-hero"
-      title="Burn-down"
+      icon={TrendingDown} title="Burn-down"
       sub={`Remaining work against the pace needed to hit your deadline${b.goalCount > 1 ? ` · ${b.goalCount} goals combined` : ''}`}
       actions={<span className={`ax-pill ax-pill-${status.tone}`}><status.Icon size={13} strokeWidth={2.4} />{status.label}</span>}
     >
